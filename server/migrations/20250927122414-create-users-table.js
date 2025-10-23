@@ -26,7 +26,7 @@ module.exports = {
       }
     });
 
-    // Добавляем индекс для email (опционально, но рекомендуется)
+
     await queryInterface.addIndex('users', ['email'], {
       unique: true,
       name: 'users_email_unique'
@@ -36,4 +36,4 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('users');
   }
-};
+};  

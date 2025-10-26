@@ -1,21 +1,65 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const YandexMap = () => {
+const YandexMap = ({ onCoordinatesChange, onElevationChange }) => {
   const mapRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+  const mapInstanceRef = useRef(null); 
 
   useEffect(() => {
     let script;
+    let isMounted = true;
 
-    // Функция инициализации карты
+ 
     const initMap = () => {
+      if (!isMounted) return;
+      
       window.ymaps.ready(() => {
+        if (!isMounted) return;
+        
         try {
-          new window.ymaps.Map(mapRef.current, {
-            center: [55.7558, 37.6173],
-            zoom: 10
-          });
-          setIsLoading(false);
+  
+          if (!mapInstanceRef.current) {
+            const map = new window.ymaps.Map(mapRef.current, {
+              center: [53.7571, 87.1350],
+              zoom: 10
+            });
+
+            mapInstanceRef.current = map;
+
+
+            map.events.add('mousemove', (e) => {
+              const coords = e.get('coords');
+              if (onCoordinatesChange) {
+                onCoordinatesChange(coords);
+              }
+            });
+
+
+            map.events.add('click', (e) => {
+              const coords = e.get('coords');
+              
+
+              if (onCoordinatesChange) {
+                onCoordinatesChange(coords);
+              }
+              
+
+              if (onElevationChange) {
+                onElevationChange(coords[0], coords[1]);
+              }
+              
+
+              const placemark = new window.ymaps.Placemark(coords, {
+                balloonContent: `Координаты: ${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}`
+              });
+              
+
+              map.geoObjects.removeAll();
+              map.geoObjects.add(placemark);
+            });
+
+            setIsLoading(false);
+          }
         } catch (error) {
           console.error('Failed to create map:', error);
           setIsLoading(false);
@@ -23,11 +67,11 @@ const YandexMap = () => {
       });
     };
 
-    // Проверяем, загружены ли Яндекс Карты
+
     if (window.ymaps) {
       initMap();
     } else {
-      // Загружаем скрипт
+
       script = document.createElement('script');
       script.src = 'https://api-maps.yandex.ru/2.1/?apikey=70d414d5-4c65-4009-8b4f-813f0d72c70c&lang=ru_RU';
       script.async = true;
@@ -41,8 +85,9 @@ const YandexMap = () => {
       document.head.appendChild(script);
     }
 
-    // Очистка
+
     return () => {
+      isMounted = false;
       if (script && script.parentNode) {
         script.parentNode.removeChild(script);
       }

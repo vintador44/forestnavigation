@@ -8,11 +8,12 @@ export const Registration = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
+  const [FIO, setFIO] = useState("");
 
   const [error_email, setErrorEmail] = useState("");
   const [error_password, setErrorPassword] = useState("");
   const [error_password2, setErrorPassword2] = useState("");
-
+  const [error_FIO, setErrorFIO] = useState("");
 
   const handleEmail = (value) => {
     setEmail(value);
@@ -26,9 +27,12 @@ export const Registration = () => {
     setPassword2(value);
     setErrorPassword2("");
   };
+  const handleFIO = (value) => {
+    setFIO(value);
+    setErrorFIO("");
+  };
 
   const callBackendAPI = async () => {
-    //тут ждем ответа от сервера
     const response = await fetch("/express_backend");
     const body = await response.json();
 
@@ -38,16 +42,16 @@ export const Registration = () => {
     return body;
   };
 
-  // получение GET маршрута с сервера Express, который соответствует GET из server.js
   useEffect(() => {
     callBackendAPI()
       .then((res) => setState(res.express))
       .catch((err) => console.log(err));
   }, []);
 
-  //тут отправляю на сервер
   const handleSubmit = async() => {
-   
+    if (!FIO.trim())
+      return setErrorFIO("Введите ФИО");
+    setErrorFIO("");
 
     if (!isEmail(email))
       return setErrorEmail("Неверный формат почты");
@@ -63,12 +67,11 @@ export const Registration = () => {
 
     const request = await fetch("http://localhost:5000/api/registration", {
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({  email, password }),
+      body: JSON.stringify({ email, password, FIO }),
       method: "POST",
     });
     const response = await request.json();
 
-    // если ошибка
     if (request.status < 200 || request.status > 299) {
       setErrorPassword(response.message);
       return setErrorPassword2("Пароль не подходит");
@@ -80,6 +83,18 @@ export const Registration = () => {
   return (
     <div className="login-container">
       <h1>Регистрация</h1>
+      
+      <div className="input-container">
+        <input
+          type="text"
+          value={FIO}
+          placeholder="Введите ФИО"
+          onChange={(e) => handleFIO(e.target.value)}
+        />
+      </div>
+      {error_FIO.length > 0 && (
+        <h1 className="error-message">{error_FIO}</h1>
+      )}
       
       <div className="input-container">
         <input

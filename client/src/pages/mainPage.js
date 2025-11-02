@@ -1,12 +1,22 @@
 import YandexMap from "./../components/YandexMap";
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const MainPage = () => {
-  const [coordinates, setCoordinates] = useState(null);
+   const [coordinates, setCoordinates] = useState(null);
   const [cordElevation, setCordElevation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const lastRequestRef = useRef(0);
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Здесь будет функционал поиска
+    console.log("Поиск:", searchQuery);
+  }
+
 
   const handleCoordinatesChange = (newCoordinates) => {
     setCoordinates(newCoordinates);
@@ -14,7 +24,6 @@ const MainPage = () => {
   }
 
   const handleCordElevationChange = (lat, lng) => {
- 
     if (!lat || !lng) {
       setError("Координаты не получены");
       return;
@@ -28,6 +37,23 @@ const MainPage = () => {
     
     lastRequestRef.current = now;
     getRealElevation(lat, lng);
+  }
+
+  const handleCreateLandmark = () => {
+    if (!coordinates) {
+      setError("Сначала выберите точку на карте");
+      return;
+    }
+    navigate('/create-location', { 
+      state: { 
+        coordinates: coordinates,
+        elevation: cordElevation 
+      } 
+    });
+  }
+
+  const handleCreateRoute = () => {
+    navigate('/create-route');
   }
 
   async function getRealElevation(lat, lng) {
@@ -62,33 +88,89 @@ const MainPage = () => {
   }
 
   return (
-    <div className="main-page" style={{ width: "50%", justifyContent: "center" }}>
-      <div style={{ padding: "10px", marginBottom: "10px" }}>
-        <div><strong>Широта:</strong> {coordinates?.[0]?.toFixed(5) ?? "Null"}</div>
-        <div><strong>Долгота:</strong> {coordinates?.[1]?.toFixed(5) ?? "Null"}</div>
-        <div>
-          <strong>Высота над уровнем моря:</strong>{" "}
-          {isLoading ? (
-            "Загрузка..."
-          ) : cordElevation !== null ? (
-            `${cordElevation.toFixed(2)} метров`
-          ) : (
-            "—"
+    <div className="main-page">
+      <div style={{ position: 'relative', width: '100%' }}>
+        <YandexMap 
+          onCoordinatesChange={handleCoordinatesChange} 
+          onElevationChange={handleCordElevationChange} 
+        />
+        
+        
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '23%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          width: '90%',
+          maxWidth: '500px'
+        }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Поиск по тегам"
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                outline: 'none'
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '12px 20px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+              }}
+            >
+              Найти
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="botContainer">
+        <button 
+          className="action-button"
+          onClick={handleCreateLandmark}
+          disabled={!coordinates}
+        >
+          Создать достопримечательность
+        </button>
+       
+        <div className="coordinates-info">
+          <div><strong>Широта:</strong> {coordinates?.[0]?.toFixed(5) ?? "Null"}</div>
+          <div><strong>Долгота:</strong> {coordinates?.[1]?.toFixed(5) ?? "Null"}</div>
+          <div>
+            <strong>Высота над уровнем моря:</strong>{" "}
+            {isLoading ? "Загрузка..." : cordElevation !== null ? `${cordElevation.toFixed(2)} метров` : "—"}
+          </div>
+          
+          {error && (
+            <div className="error-message">
+              Ошибка: {error}
+            </div>
           )}
         </div>
         
-        {error && (
-          <div style={{ color: 'red', fontSize: '14px', marginTop: '5px' }}>
-            Ошибка: {error}
-          </div>
-        )}
-        
-        
+        <button 
+          className="action-button"
+          onClick={handleCreateRoute}
+        >
+          Создать маршрут
+        </button>
       </div>
-      <YandexMap 
-        onCoordinatesChange={handleCoordinatesChange} 
-        onElevationChange={handleCordElevationChange} 
-      />
     </div>
   );
 };

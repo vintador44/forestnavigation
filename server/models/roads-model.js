@@ -1,27 +1,51 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Roads extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+  class Road extends Model {
     static associate(models) {
-      // define association here
+      Road.belongsTo(models.User, {
+        foreignKey: 'UserID',
+        as: 'user'
+      });
+      Road.hasMany(models.Dot, {
+        foreignKey: 'RoadID',
+        as: 'dots'
+      });
+      Road.hasMany(models.Vote, {
+        foreignKey: 'RoadID',
+        as: 'votes'
+      });
     }
   }
-  Roads.init({
-    ID: DataTypes.INTEGER,
-    Description: DataTypes.STRING,
-    UserID: DataTypes.INTEGER,
-    StartDateTime: DataTypes.DATE,
-    EndDateTime: DataTypes.DATE
+  Road.init({
+    ID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    Description: {
+      type: DataTypes.TEXT
+    },
+    UserID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'ID'
+      }
+    },
+    StartDateTime: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+    EndDateTime: {
+      type: DataTypes.DATE
+    }
   }, {
     sequelize,
-    modelName: 'roads',
+    modelName: 'Road',
+    tableName: 'roads',
+    timestamps: false
   });
-  return Roads;
+  return Road;
 };

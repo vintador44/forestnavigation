@@ -1,26 +1,48 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Photos extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+  class Photo extends Model {
     static associate(models) {
-      // define association here
+      Photo.belongsTo(models.User, {
+        foreignKey: 'UserID',
+        as: 'user'
+      });
+      Photo.belongsTo(models.Location, {
+        foreignKey: 'LocationID',
+        as: 'location'
+      });
     }
   }
-  Photos.init({
-    ID: DataTypes.INTEGER,
-    UserID: DataTypes.INTEGER,
-    LocationID: DataTypes.INTEGER,
-    PhotoBYTEA: DataTypes.BLOB
+  Photo.init({
+    ID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    UserID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'ID'
+      }
+    },
+    LocationID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'locations',
+        key: 'ID'
+      }
+    },
+    PhotoBYTEA: {
+      type: DataTypes.BLOB
+    }
   }, {
     sequelize,
-    modelName: 'photos',
+    modelName: 'Photo',
+    tableName: 'photos',
+    timestamps: false
   });
-  return Photos;
+  return Photo;
 };

@@ -1,26 +1,49 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Votes extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+  class Vote extends Model {
     static associate(models) {
-      // define association here
+      Vote.belongsTo(models.User, {
+        foreignKey: 'UserID',
+        as: 'user'
+      });
+      Vote.belongsTo(models.Road, {
+        foreignKey: 'RoadID',
+        as: 'road'
+      });
     }
   }
-  Votes.init({
-    ID: DataTypes.INTEGER,
-    UserID: DataTypes.INTEGER,
-    RoadID: DataTypes.INTEGER,
-    Vote: DataTypes.INTEGER
+  Vote.init({
+    ID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    UserID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'ID'
+      }
+    },
+    RoadID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'roads',
+        key: 'ID'
+      }
+    },
+    Vote: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false
+    }
   }, {
     sequelize,
-    modelName: 'votes',
+    modelName: 'Vote',
+    tableName: 'votes',
+    timestamps: false
   });
-  return Votes;
+  return Vote;
 };

@@ -11,16 +11,50 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      User.hasMany(models.Photo, {
+        foreignKey: 'UserID',
+        as: 'photos'
+      });
+      User.hasMany(models.Road, {
+        foreignKey: 'UserID',
+        as: 'roads'
+      });
+      User.hasMany(models.Vote, {
+        foreignKey: 'UserID',
+        as: 'votes'
+      });
     }
   }
   User.init({
-    ID: DataTypes.INTEGER,
-    Password: DataTypes.STRING,
-    Email: DataTypes.STRING,
-    FIO: DataTypes.STRING
+    ID: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    Password: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    Email: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true
+      }
+    },
+    FIO: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    }
   }, {
     sequelize,
-    modelName: 'user',
+    modelName: 'User', 
+    tableName: 'user', 
+    timestamps: false 
   });
   return User;
 };

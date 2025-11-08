@@ -13,8 +13,7 @@ class LocationsService {
                 const tagVars = [tag, `${tag} %`, `% ${tag} %`, `% ${tag}`];
                 tagVars.forEach((tagVar) => {
                     whereCond[Op.or].push(
-                        { LocationName: { [Op.iLike]: tagVar } },
-                        { Description: { [Op.iLike]: tagVar } }
+                        { Categories: { [Op.iLike]: tagVar } }
                     );
                 });
             });

@@ -22,11 +22,7 @@ module.exports = {
         allowNull: false
       },
       Categories: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'categories',
-          key: 'ID'
-        }
+        type: Sequelize.STRING(150)
       }
     });
   },

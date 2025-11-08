@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const YandexMap = ({ onCoordinatesChange, onElevationChange }) => {
+const YandexMap = ({onMapLoad, onCoordinatesChange, onElevationChange}) => {
   const mapRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const mapInstanceRef = useRef(null);
+
+  const lastPlacemark = useRef(null);
 
   useEffect(() => {
     let script;
@@ -55,11 +57,34 @@ const YandexMap = ({ onCoordinatesChange, onElevationChange }) => {
                 )}, ${coords[1].toFixed(6)}`,
               });
 
-              map.geoObjects.removeAll();
+              if (lastPlacemark.current)
+                map.geoObjects.remove(lastPlacemark.current);
+
               map.geoObjects.add(placemark);
+              lastPlacemark.current = placemark;
             });
 
             setIsLoading(false);
+
+            const addLocation = (title, desc, coords) => {
+              const marker = new window.ymaps.Placemark(coords, {
+                hintContent: title,
+                balloonContentHeader: title,
+                balloonContent: desc,
+                balloonContentFooter: `Координаты: ${coords[0].toFixed(6)}, ${coords[1].toFixed(6)}`
+              }, {
+                preset: 'islands#redDotIcon'
+              });
+              map.geoObjects.add(marker);
+            }
+
+            const removeLocations = () => {
+              map.geoObjects.removeAll();
+              if (lastPlacemark.current)
+                map.geoObjects.add(lastPlacemark.current);
+            }
+
+            onMapLoad(addLocation, removeLocations);
           }
         } catch (error) {
           console.error("Failed to create map:", error);

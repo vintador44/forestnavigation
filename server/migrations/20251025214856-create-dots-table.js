@@ -10,11 +10,11 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       ThisDotCoordinates: {
-        type: Sequelize.GEOGRAPHY,
+        type: Sequelize.GEOGRAPHY('point'),
         allowNull: false
       },
       NextDotCoordinates: {
-        type: Sequelize.GEOGRAPHY,
+        type: Sequelize.GEOGRAPHY('point'),
         allowNull: false
       },
       RoadID: {

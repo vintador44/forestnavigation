@@ -14,7 +14,7 @@ module.exports = {
         allowNull: false
       },
       Coordinates: {
-        type: Sequelize.GEOGRAPHY,
+        type: Sequelize.GEOGRAPHY('point'),
         allowNull: false
       },
       Description: {
@@ -22,8 +22,11 @@ module.exports = {
         allowNull: false
       },
       Categories: {
-        type: Sequelize.STRING(150),
-        allowNull: false
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'categories',
+          key: 'ID'
+        }
       }
     });
   },

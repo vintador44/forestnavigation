@@ -14,10 +14,11 @@ module.exports = (sequelize, DataTypes) => {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
+      allowNull: false
     },
     CategoryName: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false
     }
   }, {

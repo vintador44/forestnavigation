@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const MainPage = () => {
-   const [coordinates, setCoordinates] = useState(null);
+  const [coordinates, setCoordinates] = useState(null);
   const [cordElevation, setCordElevation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,12 +11,22 @@ const MainPage = () => {
   const lastRequestRef = useRef(0);
   const navigate = useNavigate();
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // Здесь будет функционал поиска
-    console.log("Поиск:", searchQuery);
+  const addLocation = useRef(null);
+  const removeLocations = useRef(null);
+
+  const handleMapLoad = (addLocFn, removeLocFn) => {
+    addLocation.current = addLocFn;
+    removeLocations.current = removeLocFn;
+
+    showLocations();
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log("Поиск:", searchQuery);
+
+    showLocations();
+  }
 
   const handleCoordinatesChange = (newCoordinates) => {
     setCoordinates(newCoordinates);
@@ -56,6 +66,18 @@ const MainPage = () => {
     navigate('/create-route');
   }
 
+  const showLocations = () => {
+    const locations = getLocations(searchQuery);
+    locations.then((value) => {
+      removeLocations.current();
+      value.locations.forEach((loc) => {
+        addLocation.current(loc.LocationName,
+          loc.Description,
+          loc.Coordinates);
+      });
+    });
+  }
+
   async function getRealElevation(lat, lng) {
     if (!lat || !lng) return;
     
@@ -87,10 +109,34 @@ const MainPage = () => {
     }
   }
 
+  async function getLocations(tagString) {
+    console.log(tagString);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/locations' + (tagString ? `?tags=${tagString}` : '')
+      );
+
+      const data = response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `Server error: ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting locations:', error);
+      setError(error.message);
+      return { locations: [] };
+    }
+  }
+
   return (
     <div className="main-page">
       <div style={{ position: 'relative', width: '100%' }}>
-        <YandexMap 
+        <YandexMap
+          onMapLoad={handleMapLoad}
           onCoordinatesChange={handleCoordinatesChange} 
           onElevationChange={handleCordElevationChange} 
         />

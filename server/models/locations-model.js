@@ -14,23 +14,26 @@ module.exports = (sequelize, DataTypes) => {
     ID: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
+      allowNull: false
     },
     LocationName: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(100),
       allowNull: false
     },
     Coordinates: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.GEOGRAPHY,
+      allowNull: false
     },
     Description: {
-      type: DataTypes.TEXT
+      type: DataTypes.TEXT,
+      allowNull: false
     },
     Categories: {
       type: DataTypes.INTEGER,
       references: {
         model: 'categories',
-        key: 'id'
+        key: 'ID'
       }
     }
   }, {

@@ -20,7 +20,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     NextDotCoordinates: {
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+      allowNull: true
     },
     RoadID: {
       type: DataTypes.INTEGER,

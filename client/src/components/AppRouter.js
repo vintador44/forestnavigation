@@ -15,6 +15,7 @@ const AppRouter = () => {
       <Route path="/registration" element={<Registration />} />
       <Route path="/create-route" element={<CreateRoadPage />} />
       <Route path="/create-location" element={<CreateLocationPage />} />
+      
     </Routes>
   );
 };

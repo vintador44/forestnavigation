@@ -1,0 +1,117 @@
+.create-road-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 25px;
+  font-family: "Segoe UI", sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.map-fullscreen {
+    width: 90%;
+    height: 100%;
+    
+}
+
+.back-button {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  background: #ddd;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.back-button:hover {
+  background: #ccc;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 450px;
+  border: 1px solid #aaa;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.points-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-point-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.add-point-row input,
+.add-point-row select {
+  flex: 1;
+  padding: 6px;
+  border-radius: 5px;
+  border: 1px solid #aaa;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.add-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.add-button:hover {
+  background-color: #218838;
+}
+
+.point-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.temp-hint {
+  background: #fff8d6;
+  padding: 8px;
+  border: 1px solid #f1d37c;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+

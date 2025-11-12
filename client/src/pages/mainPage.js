@@ -1,5 +1,5 @@
 import YandexMap from "./../components/YandexMap";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const MainPage = () => {
@@ -8,23 +8,176 @@ const MainPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [roads, setRoads] = useState([]);
   const lastRequestRef = useRef(0);
   const navigate = useNavigate();
 
   const addLocation = useRef(null);
   const removeLocations = useRef(null);
+  const addRoute = useRef(null);
+  const removeRoutes = useRef(null);
 
-  const handleMapLoad = (addLocFn, removeLocFn) => {
+  // Загрузка маршрутов при монтировании
+  useEffect(() => {
+    loadRoads();
+  }, []);
+
+  // Показываем маршруты на карте когда данные загружены или обновлены
+  useEffect(() => {
+    if (roads.length > 0 && addRoute.current) {
+      showRoadsOnMap();
+    }
+  }, [roads, addRoute.current]); // Добавляем зависимость от roads и addRoute.current
+
+  const handleMapLoad = (addLocFn, removeLocFn, addRouteFn, removeRouteFn) => {
     addLocation.current = addLocFn;
     removeLocations.current = removeLocFn;
+    addRoute.current = addRouteFn;
+    removeRoutes.current = removeRouteFn;
 
     showLocations();
+    // Показываем маршруты если они уже загружены
+    if (roads.length > 0) {
+      showRoadsOnMap();
+    }
+  }
+
+  const loadRoads = async () => {
+    try {
+      console.log("Загрузка маршрутов...");
+      const response = await fetch('http://localhost:5000/api/roads');
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Получены данные маршрутов:", data);
+        if (data.success) {
+          setRoads(data.data.roads);
+        }
+      } else {
+        console.error("Ошибка HTTP:", response.status);
+      }
+    } catch (error) {
+      console.error('Error loading roads:', error);
+    }
+  }
+
+  const showRoadsOnMap = () => {
+    if (!addRoute.current || !removeRoutes.current) {
+      console.log("Функции карты еще не загружены");
+      return;
+    }
+    
+    console.log("Отображение маршрутов на карте:", roads.length);
+    removeRoutes.current();
+    
+    roads.forEach((road, index) => {
+      console.log(`Обработка маршрута ${index + 1}:`, road);
+      
+      // Преобразуем точки маршрута в координаты для отображения
+      // === СОРТИРУЕМ ТОЧКИ ПО ПОРЯДКУ МАРШРУТА ===
+const sortedDots = sortDotsByOrder(road.dots);
+
+const routeCoordinates = sortedDots.map(dot => {
+  if (dot.ThisDotCoordinates?.coordinates) {
+    const [lng, lat] = dot.ThisDotCoordinates.coordinates;
+    return [lat, lng];
+  } else if (typeof dot.ThisDotCoordinates === 'string') {
+    const match = dot.ThisDotCoordinates.match(/POINT\(([^ ]+) ([^)]+)\)/);
+    if (match) {
+      const lng = parseFloat(match[1]);
+      const lat = parseFloat(match[2]);
+      return [lat, lng];
+    }
+  }
+  console.warn("Некорректные координаты:", dot);
+  return null;
+}).filter(Boolean);
+
+// === Функция сортировки (вставьте её ВНЕ showRoadsOnMap) ===
+function sortDotsByOrder(dots) {
+  if (!dots || dots.length === 0) return dots;
+
+  // Строим мапу: ThisDot → Dot
+  const dotMap = new Map();
+  const nextMap = new Map(); // ThisKey → NextKey
+
+  dots.forEach(dot => {
+    const thisCoord = getCoordKey(dot.ThisDotCoordinates);
+    const nextCoord = dot.NextDotCoordinates ? getCoordKey(dot.NextDotCoordinates) : null;
+    
+    dotMap.set(thisCoord, dot);
+    if (nextCoord) nextMap.set(thisCoord, nextCoord);
+  });
+
+  // Находим стартовую точку (её координаты не являются чьим-то Next)
+  let startKey = null;
+  for (let key of dotMap.keys()) {
+    let isStart = true;
+    for (let nextKey of nextMap.values()) {
+      if (nextKey === key) {
+        isStart = false;
+        break;
+      }
+    }
+    if (isStart) {
+      startKey = key;
+      break;
+    }
+  }
+
+  if (!startKey) startKey = Array.from(dotMap.keys())[0];
+
+  // Собираем маршрут по цепочке
+  const ordered = [];
+  let currentKey = startKey;
+
+  while (currentKey && dotMap.has(currentKey)) {
+    const dot = dotMap.get(currentKey);
+    ordered.push(dot);
+    currentKey = nextMap.get(currentKey) || null;
+  }
+
+  return ordered;
+}
+
+// Вспомогательная функция для получения ключа координат
+function getCoordKey(coord) {
+  if (!coord) return null;
+  
+  // GeoJSON: { coordinates: [lng, lat] }
+  if (coord.coordinates && Array.isArray(coord.coordinates)) {
+    return `${coord.coordinates[0].toFixed(6)},${coord.coordinates[1].toFixed(6)}`;
+  }
+  
+  // WKT: "POINT(lng lat)"
+  if (typeof coord === 'string') {
+    const match = coord.match(/POINT\(([^ ]+) ([^)]+)\)/);
+    if (match) {
+      return `${parseFloat(match[1]).toFixed(6)},${parseFloat(match[2]).toFixed(6)}`;
+    }
+  }
+  
+  return null;
+}
+
+      console.log(`Координаты маршрута ${index + 1}:`, routeCoordinates);
+
+      if (routeCoordinates.length > 1) {
+        addRoute.current(
+          routeCoordinates,
+          road.Name || `Маршрут ${road.ID}`,
+          road.Description || 'Без описания',
+          road.Complexity || 'Не указана'
+        );
+        console.log(`Маршрут ${index + 1} добавлен на карту`);
+      } else {
+        console.warn(`Маршрут ${index + 1} имеет недостаточно точек:`, routeCoordinates.length);
+      }
+    });
   }
 
   const handleSearch = (e) => {
     e.preventDefault();
     console.log("Поиск:", searchQuery);
-
     showLocations();
   }
 
@@ -69,12 +222,14 @@ const MainPage = () => {
   const showLocations = () => {
     const locations = getLocations(searchQuery);
     locations.then((value) => {
-      removeLocations.current();
-      value.locations.forEach((loc) => {
-        addLocation.current(loc.LocationName,
-          loc.Description,
-          loc.Coordinates);
-      });
+      if (removeLocations.current && addLocation.current) {
+        removeLocations.current();
+        value.locations.forEach((loc) => {
+          addLocation.current(loc.LocationName,
+            loc.Description,
+            loc.Coordinates);
+        });
+      }
     });
   }
 
@@ -118,7 +273,7 @@ const MainPage = () => {
         'http://localhost:5000/api/locations' + (tagString ? `?tags=${tagString}` : '')
       );
 
-      const data = response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || `Server error: ${response.status}`);
@@ -134,14 +289,14 @@ const MainPage = () => {
 
   return (
     <div className="main-page">
-      <div style={{ position: 'relative', width: '100%' }}>
+      <div style={{ position: 'relative', width: '100%' ,height: '80%'}}>
         <YandexMap
           onMapLoad={handleMapLoad}
           onCoordinatesChange={handleCoordinatesChange} 
           onElevationChange={handleCordElevationChange} 
         />
         
-        
+        {/* Панель поиска */}
         <div style={{
           position: 'absolute',
           top: '20px',
@@ -199,8 +354,7 @@ const MainPage = () => {
           <div><strong>Широта:</strong> {coordinates?.[0]?.toFixed(5) ?? "Null"}</div>
           <div><strong>Долгота:</strong> {coordinates?.[1]?.toFixed(5) ?? "Null"}</div>
           <div>
-            <strong>Высота над уровнем моря:</strong>{" "}
-            {isLoading ? "Загрузка..." : cordElevation !== null ? `${cordElevation.toFixed(2)} метров` : "—"}
+           
           </div>
           
           {error && (

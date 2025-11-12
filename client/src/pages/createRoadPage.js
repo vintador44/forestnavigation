@@ -185,6 +185,15 @@ const CreateRoadPage = () => {
       );
     });
 
+    allTrack.sort((a, b) => a.globalIndex - b.globalIndex);
+    console.log("Финальный routeTrack (первые 5 точек):", 
+  allTrack.slice(0, 5).map(p => ({
+    lat: p.lat,
+    lng: p.lng,
+    globalIndex: p.globalIndex,
+    time_offset_hours: p.time_offset_hours
+  }))
+);
     return {
       track: allTrack,
       weatherTimeline: allWeather,
@@ -292,7 +301,7 @@ const CreateRoadPage = () => {
   const handlePublish = async () => {
     const success = await saveRouteToDatabase();
     if (success) {
-      navigate('/roads');
+      navigate('/mainPage');
     }
   };
 
@@ -432,9 +441,7 @@ const CreateRoadPage = () => {
       />
 
       <div className="floating-controls">
-        <button onClick={() => navigate(-1)} className="back-button">
-          Назад
-        </button>
+        
 
         <div className="panel">
           <h3>Создание маршрута</h3>

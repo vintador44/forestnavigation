@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const YandexMap = ({onMapLoad, onCoordinatesChange, onElevationChange}) => {
+const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick}) => { // Изменили onElevationChange на onMapClick
   const mapRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const mapInstanceRef = useRef(null);
 
   const lastPlacemark = useRef(null);
+  const routeObjects = useRef([]);
 
   useEffect(() => {
     let script;
@@ -42,13 +43,15 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onElevationChange}) => {
 
             map.events.add("click", (e) => {
               const coords = e.get("coords");
+              console.log('Клик по карте YandexMap:', coords); // Добавляем логирование
 
               if (onCoordinatesChange) {
                 onCoordinatesChange(coords);
               }
 
-              if (onElevationChange) {
-                onElevationChange(coords[0], coords[1]);
+              // ВЫЗЫВАЕМ onMapClick вместо onElevationChange
+              if (onMapClick) {
+                onMapClick(coords);
               }
 
               const placemark = new window.ymaps.Placemark(coords, {
@@ -79,12 +82,52 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onElevationChange}) => {
             }
 
             const removeLocations = () => {
-              map.geoObjects.removeAll();
-              if (lastPlacemark.current)
-                map.geoObjects.add(lastPlacemark.current);
+              const objectsToRemove = [];
+              map.geoObjects.each((obj) => {
+                if (obj !== lastPlacemark.current && !routeObjects.current.includes(obj)) {
+                  objectsToRemove.push(obj);
+                }
+              });
+              objectsToRemove.forEach(obj => map.geoObjects.remove(obj));
             }
 
-            onMapLoad(addLocation, removeLocations);
+            const addRoute = (coordinates, name, description, complexity) => {
+              const routeLine = new window.ymaps.Polyline(coordinates, {}, {
+                strokeColor: '#1e88e5',
+                strokeWidth: 4,
+                strokeOpacity: 0.7
+              });
+
+              const startPlacemark = new window.ymaps.Placemark(coordinates[0], {
+                hintContent: name,
+                balloonContentHeader: name,
+                balloonContent: `${description}<br>Сложность: ${complexity}<br>Начало маршрута`
+              }, {
+                preset: 'islands#greenCircleIcon'
+              });
+
+              const endPlacemark = new window.ymaps.Placemark(coordinates[coordinates.length - 1], {
+                hintContent: name,
+                balloonContent: `Конец маршрута: ${name}`
+              }, {
+                preset: 'islands#redCircleIcon'
+              });
+
+              map.geoObjects.add(routeLine);
+              map.geoObjects.add(startPlacemark);
+              map.geoObjects.add(endPlacemark);
+
+              routeObjects.current.push(routeLine, startPlacemark, endPlacemark);
+            }
+
+            const removeRoutes = () => {
+              routeObjects.current.forEach(obj => {
+                map.geoObjects.remove(obj);
+              });
+              routeObjects.current = [];
+            }
+
+            onMapLoad(addLocation, removeLocations, addRoute, removeRoutes);
           }
         } catch (error) {
           console.error("Failed to create map:", error);
@@ -116,15 +159,13 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onElevationChange}) => {
         script.parentNode.removeChild(script);
       }
     };
-  }, []);
+  }, [onMapLoad, onCoordinatesChange, onMapClick]); // Добавляем зависимости
 
   return (
     <div
       style={{
-        paddingTop: "20px",
         width: "100%",
-        height: "70vh",
-        position: "relative",
+        height: "100%",
       }}
     >
       {isLoading && (

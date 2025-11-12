@@ -24,6 +24,42 @@ class LocationsService {
             loc.Coordinates = loc.Coordinates.coordinates
         });
         return { locations: locations };
+    } async createLocation(locationData) {
+        const { Location } = require('../models'); // или через app.get если предпочитаете
+        
+        const newLocation = await Location.create(locationData);
+        return newLocation;
+    }
+
+    async updateLocation(id, updateData) {
+        
+        
+        const location = await Location.findByPk(id);
+        if (!location) {
+            return null;
+        }
+
+        await location.update(updateData);
+        return location;
+    }
+
+    async deleteLocation(id) {
+        
+        
+        const location = await Location.findByPk(id);
+        if (!location) {
+            return null;
+        }
+
+        await location.destroy();
+        return true;
+    }
+
+    async getLocationById(id) {
+       
+        
+        const location = await Location.findByPk(id);
+        return location;
     }
 }
 

@@ -657,6 +657,46 @@ class RouteController {
 
     return true;
   }
+  // В route-controller.js добавить метод:
+
+async getAllRoads(req, res) {
+  try {
+    const roads = await Road.findAll({
+      include: [
+        {
+          model: Dot,
+          as: "dots",
+          attributes: [
+            "ID",
+            "ThisDotCoordinates",
+            "NextDotCoordinates",
+            "RoadID",
+          ],
+        },
+        {
+          model: User,
+          as: "user",
+          attributes: ["ID", "FIO", "Email"],
+        },
+      ],
+      order: [["StartDateTime", "DESC"]],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        roads,
+        count: roads.length,
+      },
+    });
+  } catch (error) {
+    console.error("Ошибка при получении маршрутов:", error);
+    res.status(500).json({
+      success: false,
+      error: "Ошибка при получении маршрутов",
+    });
+  }
+}
 }
 
 module.exports = new RouteController();

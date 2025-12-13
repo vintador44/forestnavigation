@@ -42,6 +42,8 @@ const MainPage = () => {
     }
   }
 
+  const onLocationSelect = (id) => navigate(`/location/${id}`);
+
   const loadRoads = async () => {
     try {
       console.log("Загрузка маршрутов...");
@@ -227,7 +229,8 @@ function getCoordKey(coord) {
         value.locations.forEach((loc) => {
           addLocation.current(loc.LocationName,
             loc.Description,
-            loc.Coordinates);
+            loc.Coordinates,
+            loc.ID);
         });
       }
     });
@@ -294,6 +297,7 @@ function getCoordKey(coord) {
           onMapLoad={handleMapLoad}
           onCoordinatesChange={handleCoordinatesChange} 
           onElevationChange={handleCordElevationChange} 
+          onLocationSelect={onLocationSelect}
         />
         
         {/* Панель поиска */}

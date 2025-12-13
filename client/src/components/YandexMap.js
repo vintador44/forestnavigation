@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick}) => { // Изменили onElevationChange на onMapClick
+const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect}) => { // Изменили onElevationChange на onMapClick
   const mapRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const mapInstanceRef = useRef(null);
@@ -69,7 +69,7 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick}) => { // Изм�
 
             setIsLoading(false);
 
-            const addLocation = (title, desc, coords) => {
+            const addLocation = (title, desc, coords, id = null, focus = false) => {
               const marker = new window.ymaps.Placemark(coords, {
                 hintContent: title,
                 balloonContentHeader: title,
@@ -79,6 +79,12 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick}) => { // Изм�
                 preset: 'islands#redDotIcon'
               });
               map.geoObjects.add(marker);
+
+              if (onLocationSelect && id) {
+                marker.events.add('click', (_) => onLocationSelect(id));
+              }
+
+              if (focus) map.setCenter(coords);
             }
 
             const removeLocations = () => {

@@ -5,6 +5,7 @@ import Login from "../pages/login";
 import MainPage from "../pages/mainPage";
 import CreateLocationPage from "../pages/createLocationPage";
 import CreateRoadPage from "../pages/createRoadPage";
+import ViewLocationPage from "../pages/viewLocationPage";
 
 const AppRouter = () => {
   return (
@@ -15,7 +16,7 @@ const AppRouter = () => {
       <Route path="/registration" element={<Registration />} />
       <Route path="/create-route" element={<CreateRoadPage />} />
       <Route path="/create-location" element={<CreateLocationPage />} />
-      
+      <Route path="/location/:location" element={<ViewLocationPage />} />
     </Routes>
   );
 };

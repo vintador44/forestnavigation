@@ -6,7 +6,7 @@ class CategoryController {
             const { Category } = req.app.get('models');
             
             const categories = await Category.findAll({
-                attributes: ['id', 'CategoryName'],
+                attributes: ['ID', 'CategoryName'],
                 order: [['CategoryName', 'ASC']]
             });
 

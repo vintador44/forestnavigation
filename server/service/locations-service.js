@@ -56,9 +56,8 @@ class LocationsService {
     }
 
     async getLocationById(id) {
-       
-        
         const location = await Location.findByPk(id);
+        location.Coordinates = location.Coordinates.coordinates;
         return location;
     }
 }

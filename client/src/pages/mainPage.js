@@ -2,6 +2,8 @@ import YandexMap from "./../components/YandexMap";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+import "../styles/ViewLocationPanel.css";
+
 const MainPage = () => {
   const [coordinates, setCoordinates] = useState(null);
   const [cordElevation, setCordElevation] = useState(null);
@@ -10,6 +12,10 @@ const MainPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roads, setRoads] = useState([]);
   const lastRequestRef = useRef(0);
+
+  const [viewLocationPanelOpen, setViewLocationPanelOpen] = useState(false);
+  const [locationData, setLocationData] = useState({});
+
   const navigate = useNavigate();
 
   const addLocation = useRef(null);
@@ -42,7 +48,28 @@ const MainPage = () => {
     }
   }
 
-  const onLocationSelect = (id) => navigate(`/location/${id}`);
+  const handleLocationSelect = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/locations/${id}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `Error while fetching locations: ${response.status}`);
+      }
+
+      console.log(data);
+
+      const loc = data.location;
+      loc.Categories = loc.Categories.split(' ');
+
+      setLocationData(loc);
+      
+      setViewLocationPanelOpen(true);
+    } catch (err) {
+      console.error(err);
+      setError(error);
+    }
+  };
 
   const loadRoads = async () => {
     try {
@@ -297,7 +324,7 @@ function getCoordKey(coord) {
           onMapLoad={handleMapLoad}
           onCoordinatesChange={handleCoordinatesChange} 
           onElevationChange={handleCordElevationChange} 
-          onLocationSelect={onLocationSelect}
+          onLocationSelect={handleLocationSelect}
         />
         
         {/* Панель поиска */}
@@ -375,6 +402,59 @@ function getCoordKey(coord) {
           Создать маршрут
         </button>
       </div>
+
+      { viewLocationPanelOpen &&
+        <div id="backdrop">
+          <div id="view-location-container">
+            {/* Заголовк локации */}
+            <div id="view-location-header">
+              {/* Название локации */}
+              <h1>{locationData.LocationName}</h1>
+
+              {/* Кнопка закрытия */}
+              <button id="view-location-close-button" 
+                onClick={(_) => setViewLocationPanelOpen(false)}
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+            <div id="view-location-data-container">
+              {/* Описание */}
+              <p id="view-location-desc">
+                {locationData.Description}
+              </p>
+
+              {/* Координаты и высота */}
+              <div id="view-location-coordinates-info">
+                <p><strong>Координаты:</strong> {locationData.Coordinates[0].toFixed(6)}, {locationData.Coordinates[1].toFixed(6)}</p>
+              </div>
+
+              <hr></hr>
+
+              {/* Категории */}
+              <div>
+                <h6 className="view-location-label">Категории:</h6>
+                <div id="view-location-categories">
+                  {locationData.Categories.length > 0 ? (
+                    <div>
+                      {locationData.Categories.map(cat => (
+                        <span key={cat} className="view-location-category-tag">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p id="view-location-empty-categories">
+                      Нет категорий
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   );
 };

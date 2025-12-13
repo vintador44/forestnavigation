@@ -69,7 +69,7 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
 
             setIsLoading(false);
 
-            const addLocation = (title, desc, coords, id = null, focus = false) => {
+            const addLocation = (title, desc, coords, id = null) => {
               const marker = new window.ymaps.Placemark(coords, {
                 hintContent: title,
                 balloonContentHeader: title,
@@ -83,8 +83,6 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
               if (onLocationSelect && id) {
                 marker.events.add('click', (_) => onLocationSelect(id));
               }
-
-              if (focus) map.setCenter(coords);
             }
 
             const removeLocations = () => {

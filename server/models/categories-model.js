@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Category.init({
-    ID: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,

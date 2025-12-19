@@ -17,7 +17,7 @@ const YandexMap = ({ onCoordinatesChange, permanentPoints = [], routeTrack = [],
           const newMap = new window.ymaps.Map(mapRef.current, {
             center: [53.7571, 87.135],
             zoom: 11,
-            controls: ["zoomControl", "fullscreenControl", "typeSelector", "geolocationControl", "rulerControl"],
+           
           });
 
           // ЛКМ — выбор точки

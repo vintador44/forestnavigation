@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import YandexMap from "../components/YandexMap";
 import '../styles/CreateLocationPage.css';
 
+import ImageCollection from '../components/ImageCollection';
+
 const CreateLocationPage = () => {
   const [locationName, setLocationName] = useState('');
   const [description, setDescription] = useState('');
@@ -317,6 +319,8 @@ const CreateLocationPage = () => {
           
         </div>
       )}
+
+      <ImageCollection />
 
       {/* Форма */}
       <form onSubmit={handleSubmit} className="create-location-form">

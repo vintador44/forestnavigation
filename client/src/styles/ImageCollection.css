@@ -1,0 +1,71 @@
+.image-collection-outer #header {
+    padding: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-height: fit-content;
+}
+
+.image-collection-outer #header h1 {
+    font-weight: 500;
+    font-size: 24px;
+    color: #374151;
+    margin-top: 5px;
+    margin-left: 25px;
+}
+
+.image-collection {
+    margin: 15px 5px 15px 5px;
+    display: grid;
+    justify-items: center;
+    grid-template-columns: 100px auto 100px;
+}
+
+.image-collection-outer .control-btn {
+    background-color: rgba(0, 0, 0, 0.25);
+    background-size: contain;
+    width: fit-content;
+    border: none;
+}
+
+.image-collection-outer .control-btn img,
+.image-collection-outer .control-btn-2 img {
+    width: inherit;
+    height: inherit;
+}
+
+.image-collection-outer .control-btn:hover {
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.image-collection-outer .control-btn:active {
+    background-color: rgba(0, 0, 0, 0.45);
+}
+
+.image-collection-outer .control-btn-2 {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background-size: contain;
+    background-color: rgba(0, 0, 0, 0.65);
+}
+
+.image-collection-outer .control-btn-2:hover {
+    filter: brightness(85%);
+}
+
+.image-collection-outer .control-btn-2:active {
+    filter: brightness(75%);
+}
+
+.image-collection #image-container {
+    display: flex;
+    align-items: center;
+    grid-column: 2;
+}
+
+.image-collection .image {
+    background-size: cover;
+    box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.5);
+}

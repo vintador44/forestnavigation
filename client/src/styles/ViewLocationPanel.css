@@ -24,6 +24,7 @@
     flex-direction: column;
     background-color: #f8fafc;
     box-shadow: 5px 5px 5px 1px rgba(0, 0, 0, 0.5);
+    overflow-y: scroll;
 }
 
 #view-location-container * {
@@ -33,6 +34,7 @@
 #view-location-data-container {
     padding: 0;
     margin: auto;
+    margin-bottom: 10px;
     width: 95%;
     height: 100vh;
     display: flex;

@@ -1,4 +1,5 @@
 import YandexMap from "./../components/YandexMap";
+import ImageCollection from "../components/ImageCollection";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -418,6 +419,9 @@ function getCoordKey(coord) {
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
+
+            {/* Фотографии */}
+            <ImageCollection readOnly />
 
             <div id="view-location-data-container">
               {/* Описание */}

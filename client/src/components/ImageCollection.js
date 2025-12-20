@@ -2,7 +2,8 @@ import React, { useState } from "react";
 
 import "../styles/ImageCollection.css";
 
-const ImageCollection = ({ maxPreviewWidth = 600,
+const ImageCollection = ({ uploadHandler,
+    maxPreviewWidth = 600,
     previewAspectRatio = 4 / 3,
     previewHeight = 400,
     readOnly = false }) => {
@@ -47,6 +48,12 @@ const ImageCollection = ({ maxPreviewWidth = 600,
         setImages(imgs);
     }
 
+    const onUpload = () => {
+        if (!readOnly) {
+            uploadHandler();
+        }
+    }
+
     return (  
         <div className="image-collection-outer">
             <div id="header">
@@ -82,6 +89,7 @@ const ImageCollection = ({ maxPreviewWidth = 600,
                             height: `${previewHeight}px`,
                             zIndex: "0"
                         }}
+                    onClick={ (_) => onUpload() }
                     alt="Текущее изображение" />
                     { !readOnly && (
                         <button className="control-btn-2"

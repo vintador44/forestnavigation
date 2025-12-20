@@ -320,7 +320,8 @@ const CreateLocationPage = () => {
         </div>
       )}
 
-      <ImageCollection />
+      {/* Фотографии */}
+      <ImageCollection uploadHandler={ handleUpload }/>
 
       {/* Форма */}
       <form onSubmit={handleSubmit} className="create-location-form">

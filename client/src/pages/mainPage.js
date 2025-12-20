@@ -2,6 +2,8 @@ import YandexMap from "./../components/YandexMap";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+import ImageCollection from "../components/ImageCollection";
+
 import "../styles/ViewLocationPanel.css";
 
 const MainPage = () => {
@@ -27,13 +29,6 @@ const [submitLoading, setSubmitLoading] = useState(false);
   const [commentText, setCommentText] = useState(""); // Для текста комментария
 const [comments, setComments] = useState([]); // Для хранения списка комментариев
 
-const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-const totalPhotos = 3; 
-
-const goToNextPhoto = () => {
-  setCurrentPhotoIndex((prev) => (prev + 1) % totalPhotos);
-};
-
 const handleCommentSubmit = () => {
   if (!commentText.trim()) {
     alert("Ошибка: Поле комментария не может быть пустым.");
@@ -49,9 +44,7 @@ const handleCommentSubmit = () => {
   // (Необязательно) Можно добавить комментарий в список как "заглушку", но с пометкой об ошибке
   // setComments(prev => [...prev, `${commentText} (Ошибка при отправке)`]);
 };
-const goToPrevPhoto = () => {
-  setCurrentPhotoIndex((prev) => (prev - 1 + totalPhotos) % totalPhotos);
-};
+
   // Загрузка маршрутов при монтировании
   useEffect(() => {
     loadRoads();
@@ -452,41 +445,8 @@ function getCoordKey(coord) {
         </button>
       </div>
 
-      {/* Заглушка для фотогалереи */}
-      <div id="view-location-photo-gallery">
-        <button
-          className="photo-nav-button left"
-          onClick={goToPrevPhoto}
-          aria-label="Предыдущее фото"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-
-        <div className="photo-placeholder">
-          <span>ФОТО</span>
-        </div>
-
-        <button
-          className="photo-nav-button right"
-          onClick={goToNextPhoto}
-          aria-label="Следующее фото"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleUpload}
-        className="create-location-button"
-        disabled={submitLoading}
-      >
-        Загрузить файлы
-      </button>
+      {/* Фотографии */}
+      <ImageCollection uploadHandler={ handleUpload } readOnly />
 
       {/* === НОВЫЙ БЛОК: ЗАГЛУШКА КОММЕНТАРИЕВ === */}
       <div id="view-location-comments-section">

@@ -1,5 +1,4 @@
 import YandexMap from "./../components/YandexMap";
-import ImageCollection from "../components/ImageCollection";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +22,36 @@ const MainPage = () => {
   const removeLocations = useRef(null);
   const addRoute = useRef(null);
   const removeRoutes = useRef(null);
+const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [commentText, setCommentText] = useState(""); // Для текста комментария
+const [comments, setComments] = useState([]); // Для хранения списка комментариев
 
+const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+const totalPhotos = 3; 
+
+const goToNextPhoto = () => {
+  setCurrentPhotoIndex((prev) => (prev + 1) % totalPhotos);
+};
+
+const handleCommentSubmit = () => {
+  if (!commentText.trim()) {
+    alert("Ошибка: Поле комментария не может быть пустым.");
+    return;
+  }
+
+  // Вместо отправки — показываем ошибку
+  alert("Ошибка: Отправка комментариев временно недоступна.");
+
+  // (Необязательно) Можно очистить поле ввода после попытки
+  // setCommentText("");
+
+  // (Необязательно) Можно добавить комментарий в список как "заглушку", но с пометкой об ошибке
+  // setComments(prev => [...prev, `${commentText} (Ошибка при отправке)`]);
+};
+const goToPrevPhoto = () => {
+  setCurrentPhotoIndex((prev) => (prev - 1 + totalPhotos) % totalPhotos);
+};
   // Загрузка маршрутов при монтировании
   useEffect(() => {
     loadRoads();
@@ -70,6 +98,9 @@ const MainPage = () => {
       console.error(err);
       setError(error);
     }
+  };
+   const handleUpload = () => {
+    alert('Ошибка загрузки фотографий');
   };
 
   const loadRoads = async () => {
@@ -404,61 +435,157 @@ function getCoordKey(coord) {
         </button>
       </div>
 
-      { viewLocationPanelOpen &&
-        <div id="backdrop">
-          <div id="view-location-container">
-            {/* Заголовк локации */}
-            <div id="view-location-header">
-              {/* Название локации */}
-              <h1>{locationData.LocationName}</h1>
+  { viewLocationPanelOpen &&
+  <div id="backdrop">
+    <div id="view-location-container">
 
-              {/* Кнопка закрытия */}
-              <button id="view-location-close-button" 
-                onClick={(_) => setViewLocationPanelOpen(false)}
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
+      {/* Заголовк локации */}
+      <div id="view-location-header">
+        {/* Название локации */}
+        <h1>{locationData.LocationName}</h1>
 
-            {/* Фотографии */}
-            <ImageCollection readOnly />
+        {/* Кнопка закрытия */}
+        <button id="view-location-close-button"
+          onClick={(_) => setViewLocationPanelOpen(false)}
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
 
-            <div id="view-location-data-container">
-              {/* Описание */}
-              <p id="view-location-desc">
-                {locationData.Description}
-              </p>
+      {/* Заглушка для фотогалереи */}
+      <div id="view-location-photo-gallery">
+        <button
+          className="photo-nav-button left"
+          onClick={goToPrevPhoto}
+          aria-label="Предыдущее фото"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
 
-              {/* Координаты и высота */}
-              <div id="view-location-coordinates-info">
-                <p><strong>Координаты:</strong> {locationData.Coordinates[0].toFixed(6)}, {locationData.Coordinates[1].toFixed(6)}</p>
+        <div className="photo-placeholder">
+          <span>ФОТО</span>
+        </div>
+
+        <button
+          className="photo-nav-button right"
+          onClick={goToNextPhoto}
+          aria-label="Следующее фото"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleUpload}
+        className="create-location-button"
+        disabled={submitLoading}
+      >
+        Загрузить файлы
+      </button>
+
+      {/* === НОВЫЙ БЛОК: ЗАГЛУШКА КОММЕНТАРИЕВ === */}
+      <div id="view-location-comments-section">
+        <h3>Комментарии</h3>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          handleCommentSubmit(); // Вызываем функцию отправки
+        }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Добавить комм"
+              style={{
+                flex: 1,
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '8px 12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              ➤
+            </button>
+          </div>
+        </form>
+
+        {/* Область для отображения комментариев */}
+        <div
+          id="view-location-comments-list"
+          style={{
+            maxHeight: '150px',
+            overflowY: 'auto',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '8px',
+            backgroundColor: '#f9f9f9'
+          }}
+        >
+          {comments.length > 0 ? (
+            comments.map((comment, index) => (
+              <div key={index} style={{ marginBottom: '8px', padding: '4px', borderBottom: '1px solid #eee' }}>
+                <strong>Максим:</strong> {comment}
               </div>
+            ))
+          ) : (
+            <p style={{ fontStyle: 'italic', color: '#666' }}>Спасибо!</p>
+          )}
+        </div>
+      </div>
+      {/* === КОНЕЦ НОВОГО БЛОКА === */}
 
-              <hr></hr>
+      <div id="view-location-data-container">
+        {/* Описание */}
+        <p id="view-location-desc">
+          {locationData.Description}
+        </p>
 
-              {/* Категории */}
+        {/* Координаты и высота */}
+        <div id="view-location-coordinates-info">
+          <p><strong>Координаты:</strong> {locationData.Coordinates[0].toFixed(6)}, {locationData.Coordinates[1].toFixed(6)}</p>
+        </div>
+
+        <hr></hr>
+
+        {/* Категории */}
+        <div>
+          <h6 className="view-location-label">Категории:</h6>
+          <div id="view-location-categories">
+            {locationData.Categories.length > 0 ? (
               <div>
-                <h6 className="view-location-label">Категории:</h6>
-                <div id="view-location-categories">
-                  {locationData.Categories.length > 0 ? (
-                    <div>
-                      {locationData.Categories.map(cat => (
-                        <span key={cat} className="view-location-category-tag">
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p id="view-location-empty-categories">
-                      Нет категорий
-                    </p>
-                  )}
-                </div>
+                {locationData.Categories.map(cat => (
+                  <span key={cat} className="view-location-category-tag">
+                    {cat}
+                  </span>
+                ))}
               </div>
-            </div>
+            ) : (
+              <p id="view-location-empty-categories">
+                Нет категорий
+              </p>
+            )}
           </div>
         </div>
-      }
+      </div>
+    </div>
+  </div>
+}
     </div>
   );
 };

@@ -3,60 +3,77 @@ const bcrypt = require('bcrypt');
 const ApiError = require('../exceptions/api-error'); 
 const UserDto = require('../dtos/user-dto');
 const { Op } = require('sequelize');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_ACCESS_SECRET ;
 
 class UserService {
     async registration(email, password, FIO) {
-        // Проверяем обязательные поля
-        if (!email || !password || !FIO) {
-            throw ApiError.BadRequest('Все поля (email, password, FIO) обязательны для заполнения');
-        }
+  if (!email || !password || !FIO) {
+    throw ApiError.BadRequest('Все поля (email, password, FIO) обязательны для заполнения');
+  }
 
-        // Проверяем существование пользователя
-        const existingUser = await User.findOne({ where: { Email: email } });
-        if (existingUser) {
-            throw ApiError.BadRequest(`Пользователь с email ${email} уже существует`);
-        }
+  const existingUser = await User.findOne({ where: { Email: email } });
+  if (existingUser) {
+    throw ApiError.BadRequest(`Пользователь с email ${email} уже существует`);
+  }
 
-        // Хешируем пароль
-        const hashPassword = await bcrypt.hash(password, 3);
-       
-        // Создаем пользователя
-        const user = await User.create({
-            Email: email,
-            Password: hashPassword, // Используем поле Password вместо password_hash
-            FIO: FIO
-        });
+  const hashPassword = await bcrypt.hash(password, 10); // ↑ 3 → 10 (надёжнее)
+  const user = await User.create({
+    Email: email,
+    Password: hashPassword,
+    FIO: FIO
+  });
 
-        const userDto = new UserDto(user);
-        
-        return { user: userDto };
-    }
-    
-    async login(authArg, password, by = 'email') {
-        let user;
-        
-        // Ищем пользователя по email
-        if (by === 'email') {
-            user = await User.findOne({ where: { Email: authArg } });
-        } else {
-            throw ApiError.BadRequest('Неподдерживаемый метод авторизации');
-        }
-        
-        // Если пользователь не найден - ошибка
-        if (!user) {
-            throw ApiError.BadRequest('Пользователь не найден');
-        }
-        
-        // Проверяем пароль
-        const isPassEquals = await bcrypt.compare(password, user.Password);
-        if (!isPassEquals) {
-            throw ApiError.BadRequest('Неверный пароль');
-        }
-        
-        const userDto = new UserDto(user);
-        
-        return { user: userDto };
-    }
+  const userDto = new UserDto(user);
+
+  // ✅ Генерируем токен
+  const token = jwt.sign(
+    { id: user.ID, fio: user.FIO, email: user.Email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  // ✅ Возвращаем token + user
+  return { 
+    success: true,
+    token,
+    user: userDto 
+  };
+}
+
+async login(authArg, password, by = 'email') {
+  let user;
+  if (by === 'email') {
+    user = await User.findOne({ where: { Email: authArg } });
+  } else {
+    throw ApiError.BadRequest('Неподдерживаемый метод авторизации');
+  }
+
+  if (!user) {
+    throw ApiError.BadRequest('Пользователь не найден');
+  }
+
+  const isPassEquals = await bcrypt.compare(password, user.Password);
+  if (!isPassEquals) {
+    throw ApiError.BadRequest('Неверный пароль');
+  }
+
+  const userDto = new UserDto(user);
+
+  // ✅ Генерируем токен
+  const token = jwt.sign(
+    { id: user.ID, fio: user.FIO, email: user.Email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  // ✅ Возвращаем token + user
+  return { 
+    success: true,
+    token,
+    user: userDto 
+  };
+}
 
     async getUserById(id) {
         const user = await User.findByPk(id);

@@ -93,6 +93,13 @@ const CreateRoadPage = () => {
     } finally {
       setIsLoadingRoute(false);
     }
+    console.log("Запрос маршрута:", {
+  points: points.length,
+  durationHours: durationHours,
+  type: typeof durationHours,
+  isFinite: isFinite(durationHours),
+  startDateTime: `${startDate}T${startTime}:00`
+});
   };
 
   // Объединение данных всех сегментов маршрута

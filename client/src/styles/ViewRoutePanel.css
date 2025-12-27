@@ -1,0 +1,330 @@
+#backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+#view-route-container {
+  background-color: white;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#view-route-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#view-route-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+#view-route-close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+#view-route-close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#view-route-content {
+  padding: 20px 30px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Стили для секций */
+.route-stats-section,
+.author-section,
+.description-section,
+.points-section,
+.comments-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.route-stats-section:last-child,
+.author-section:last-child,
+.description-section:last-child,
+.points-section:last-child,
+.comments-section:last-child {
+  border-bottom: none;
+}
+
+h3, h4 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+h3 {
+  font-size: 1.4rem;
+  border-left: 4px solid #667eea;
+  padding-left: 10px;
+}
+
+h4 {
+  font-size: 1.2rem;
+  color: #555;
+}
+
+/* Статистика */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.stat-item {
+  background: #f8f9fa;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.complexity-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* Точки маршрута */
+.points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.point-item {
+  background: #f5f7ff;
+  border: 1px solid #e1e5f1;
+  border-radius: 8px;
+  padding: 15px;
+  transition: transform 0.2s;
+}
+
+.point-item:hover {
+  transform: translateX(5px);
+  background: #edf0ff;
+}
+
+.point-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.point-number {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.point-time {
+  font-size: 0.9rem;
+  color: #666;
+  background: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.point-coords {
+  font-family: monospace;
+  color: #555;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.point-weather {
+  color: #2c5282;
+  font-size: 0.9rem;
+  padding: 8px;
+  background: rgba(66, 153, 225, 0.1);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.point-next {
+  text-align: right;
+  color: #888;
+  font-size: 0.85rem;
+  border-top: 1px dashed #ddd;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+/* Комментарии */
+.comment-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.comment-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.comment-submit-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 45px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background 0.2s;
+}
+
+.comment-submit-btn:hover:not(:disabled) {
+  background: #5a67d8;
+}
+
+.comment-submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.comment-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  border-left: 3px solid #667eea;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.comment-date {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.comment-text {
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Сообщения об отсутствии данных */
+.no-description,
+.no-points,
+.no-comments {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* Индикаторы загрузки и ошибок */
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  #view-route-container {
+    width: 95%;
+    height: 95vh;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  #view-route-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .point-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}

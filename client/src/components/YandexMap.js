@@ -95,34 +95,84 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
               objectsToRemove.forEach(obj => map.geoObjects.remove(obj));
             }
 
-            const addRoute = (coordinates, name, description, complexity) => {
-              const routeLine = new window.ymaps.Polyline(coordinates, {}, {
-                strokeColor: '#1e88e5',
-                strokeWidth: 4,
-                strokeOpacity: 0.7
-              });
+            const addRoute = (coordinates, name, description, complexity, onClick) => {
+  const routeLine = new window.ymaps.Polyline(coordinates, {}, {
+    strokeColor: '#1e88e5',
+    strokeWidth: 4,
+    strokeOpacity: 0.7,
+    // Добавляем cursor для интерактивности
+    cursor: 'pointer'
+  });
 
-              const startPlacemark = new window.ymaps.Placemark(coordinates[0], {
-                hintContent: name,
-                balloonContentHeader: name,
-                balloonContent: `${description}<br>Сложность: ${complexity}<br>Начало маршрута`
-              }, {
-                preset: 'islands#greenCircleIcon'
-              });
+  // Добавляем обработчик клика на полилинию
+  routeLine.events.add('click', (e) => {
+    console.log("Клик по маршруту:", name);
+    if (onClick) {
+      onClick();
+    }
+    
+    // Останавливаем всплытие события, чтобы не открывались другие балуны
+    e.stopPropagation();
+  });
 
-              const endPlacemark = new window.ymaps.Placemark(coordinates[coordinates.length - 1], {
-                hintContent: name,
-                balloonContent: `Конец маршрута: ${name}`
-              }, {
-                preset: 'islands#redCircleIcon'
-              });
+  // Добавляем tooltip при наведении
+  routeLine.options.set('hintContent', `Маршрут: ${name}`);
+  
+  // Меняем цвет при наведении для лучшей визуальной обратной связи
+  routeLine.events.add('mouseenter', () => {
+    routeLine.options.set('strokeColor', '#1565c0');
+    routeLine.options.set('strokeWidth', 5);
+  });
+  
+  routeLine.events.add('mouseleave', () => {
+    routeLine.options.set('strokeColor', '#1e88e5');
+    routeLine.options.set('strokeWidth', 4);
+  });
 
-              map.geoObjects.add(routeLine);
-              map.geoObjects.add(startPlacemark);
-              map.geoObjects.add(endPlacemark);
+  const startPlacemark = new window.ymaps.Placemark(coordinates[0], {
+    hintContent: name,
+    balloonContentHeader: name,
+    balloonContent: `${description}<br>Сложность: ${complexity}<br>Начало маршрута`
+  }, {
+    preset: 'islands#greenCircleIcon'
+  });
 
-              routeObjects.current.push(routeLine, startPlacemark, endPlacemark);
-            }
+  const endPlacemark = new window.ymaps.Placemark(coordinates[coordinates.length - 1], {
+    hintContent: name,
+    balloonContent: `Конец маршрута: ${name}`
+  }, {
+    preset: 'islands#redCircleIcon'
+  });
+
+  // Также добавляем обработчики клика на начальную и конечную метки
+  startPlacemark.events.add('click', (e) => {
+    console.log("Клик по начальной точке маршрута:", name);
+    if (onClick) {
+      onClick();
+    }
+    e.stopPropagation();
+  });
+
+  endPlacemark.events.add('click', (e) => {
+    console.log("Клик по конечной точке маршрута:", name);
+    if (onClick) {
+      onClick();
+    }
+    e.stopPropagation();
+  });
+
+  map.geoObjects.add(routeLine);
+  map.geoObjects.add(startPlacemark);
+  map.geoObjects.add(endPlacemark);
+
+  routeObjects.current.push(routeLine, startPlacemark, endPlacemark);
+  
+  return {
+    routeLine,
+    startPlacemark,
+    endPlacemark
+  };
+};
 
             const removeRoutes = () => {
               routeObjects.current.forEach(obj => {

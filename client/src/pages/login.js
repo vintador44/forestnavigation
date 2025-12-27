@@ -33,12 +33,13 @@ const Login = () => {
     });
     const data = await request.json();
 
-    if(request.ok && data.user ){
-      // Сохраняем пользователя в localStorage
-      localStorage.setItem("user", JSON.stringify(data.user));
-     
-      navigate("/mainPage");
-    }
+    if (request.ok && data.user) {
+  // ✅ Сохраняем ТОКЕН (главное!) + данные пользователя
+  localStorage.setItem("token", data.token); // ← новая строка
+  localStorage.setItem("user", JSON.stringify(data.user));
+  
+  navigate("/mainPage");
+}
     else {
       if (!data.message) data.message = "не удалось войти";
       alert(`Ошибка: ${data.message}`);

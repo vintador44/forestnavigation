@@ -31,18 +31,24 @@ class LocationsService {
         return newLocation;
     }
 
-    async updateLocation(id, updateData) {
-        
-        
-        const location = await Location.findByPk(id);
-        if (!location) {
-            return null;
-        }
+    // ✅ LocationsService.js — правильная версия updateLocation
+async updateLocation(id, updateData) {
+  // Находим локацию
+  const location = await Location.findByPk(id);
+  if (!location) {
+    return null; // или throw new Error('Location not found');
+  }
 
-        await location.update(updateData);
-        return location;
-    }
+  // Обновляем поля
+  await location.update(updateData);
 
+  // Преобразуем Coordinates для выхода (если нужно)
+  if (location.Coordinates && location.Coordinates.coordinates) {
+    location.Coordinates = location.Coordinates.coordinates;
+  }
+
+  return location;
+}
     async deleteLocation(id) {
         
         

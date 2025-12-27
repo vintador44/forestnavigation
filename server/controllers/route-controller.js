@@ -384,134 +384,129 @@ class RouteController {
     return points;
   }
 
-  async getRouteDataForPoints(points, startDateTime, durationHours) {
-    const track = [];
-    const weatherTimeline = [];
-    let totalDistance = 0;
-    let totalDifficulty = 0;
-    let totalClimb = 0;
-    let totalDescent = 0;
+ async getRouteDataForPoints(points, startDateTime, durationHours) {
+  const track = [];
+  const weatherTimeline = [];
+  let totalDistance = 0, totalDifficulty = 0, totalClimb = 0, totalDescent = 0;
 
-    // Получаем прогноз для средней точки маршрута
-    const middlePointIndex = Math.floor(points.length / 2);
-    const [middleLat, middleLng] = points[middlePointIndex];
+  // 1. Запрос погоды на full interval
+  const [middleLat, middleLng] = points[Math.floor(points.length / 2)];
+  let weatherData = null;
+  if (startDateTime) {
+    await this.waitForRateLimit();
+    weatherData = await this.fetchWeatherForecast(middleLat, middleLng, startDateTime, durationHours);
+  }
 
-    let weatherData = null;
-    if (startDateTime) {
-      try {
-        await this.waitForRateLimit();
-        weatherData = await this.fetchWeatherForecast(
-          middleLat,
-          middleLng,
-          startDateTime,
-          durationHours
-        );
-      } catch (error) {
-        console.error("Ошибка получения прогноза погоды:", error);
-      }
-    }
+  // 2. Накапливаем времена и статистику
+  const pointTimesSec = [0]; // время от старта до каждой точки (в секундах)
+  let cumulativeTimeSec = 0;
 
-    for (let i = 0; i < points.length; i++) {
-      const [lat, lng] = points[i];
+  // Первая точка
+  const firstElevation = await this.fetchElevation(points[0][0], points[0][1]);
+  track.push({
+    lat: points[0][0],
+    lng: points[0][1],
+    elevation: firstElevation,
+    point_index: 0,
+  });
 
-      await this.waitForRateLimit();
-
-      try {
-        // Получаем высоту
-        const elevation = await this.fetchElevation(lat, lng);
-
-        // Добавляем точку в трек
-        const pointData = {
-          lat: parseFloat(lat.toFixed(6)),
-          lng: parseFloat(lng.toFixed(6)),
-          elevation: parseFloat(elevation.toFixed(2)),
-          point_index: i,
-        };
-
-        track.push(pointData);
-
-        // Распределяем погоду по времени для этой точки
-        let pointWeather = null;
-        if (weatherData && startDateTime) {
-          const pointTimeOffset = (i / (points.length - 1)) * durationHours;
-          pointWeather = this.distributeWeatherByTime(
-            weatherData,
-            pointTimeOffset
-          );
-
-          weatherTimeline.push({
-            point_index: i,
-            coordinates: { lat: pointData.lat, lng: pointData.lng },
-            time_offset_hours: parseFloat(pointTimeOffset.toFixed(1)),
-            estimated_time: this.calculateEstimatedTime(
-              startDateTime,
-              pointTimeOffset
-            ),
-            weather: pointWeather,
-          });
-        }
-
-        // Рассчитываем статистику для сегмента (если это не первая точка)
-        if (i > 0) {
-          const prevPoint = track[i - 1];
-          // Передаем погоду в расчет сложности
-          const segmentStats = this.calculateSegmentStats(prevPoint, pointData, pointWeather);
-
-          totalDistance += segmentStats.distance;
-          totalDifficulty += segmentStats.difficulty;
-          totalClimb += segmentStats.climb;
-          totalDescent += segmentStats.descent;
-        }
-
-        console.log(`Точка ${i + 1}/${points.length}: ${elevation}м`);
-      } catch (error) {
-        console.error(`Ошибка получения данных для точки ${i}:`, error);
-        track.push({
-          lat: parseFloat(lat.toFixed(6)),
-          lng: parseFloat(lng.toFixed(6)),
-          elevation: 0.0,
-          point_index: i,
-        });
-      }
-    }
-
-    // Общая статистика маршрута
-    const statistics = {
-      total_distance: Math.round(totalDistance),
-      total_difficulty: Math.round(totalDifficulty),
-      total_climb: Math.round(totalClimb),
-      total_descent: Math.round(totalDescent),
-      max_elevation: Math.max(...track.map((p) => p.elevation)),
-      min_elevation: Math.min(...track.map((p) => p.elevation)),
-      avg_slope:
-        totalDistance > 0 ? ((totalClimb / totalDistance) * 100).toFixed(1) : 0,
-      estimated_duration_hours: durationHours,
+  // Пройти по сегментам
+  for (let i = 1; i < points.length; i++) {
+    const [lat, lng] = points[i];
+    
+    await this.waitForRateLimit();
+    const elevation = await this.fetchElevation(lat, lng);
+    
+    const pointData = {
+      lat: parseFloat(lat.toFixed(6)),
+      lng: parseFloat(lng.toFixed(6)),
+      elevation: parseFloat(elevation.toFixed(2)),
+      point_index: i,
     };
+    track.push(pointData);
 
-    return {
-      track,
-      statistics,
-      weatherTimeline,
-    };
+    // Считаем статистику сегмента
+    const prevPoint = track[i - 1];
+    const segmentStats = this.calculateSegmentStats(prevPoint, pointData);
+
+    // Время прохождения сегмента (средняя скорость — параметр)
+    const AVERAGE_SPEED_M_S = 5000 / 3600; // 5 км/ч → можно вынести в конфиг
+    const segmentTimeSec = segmentStats.difficulty / AVERAGE_SPEED_M_S;
+    cumulativeTimeSec += segmentTimeSec;
+    pointTimesSec.push(cumulativeTimeSec);
+
+    // Итоги
+    totalDistance += segmentStats.distance;
+    totalDifficulty += segmentStats.difficulty;
+    totalClimb += segmentStats.climb;
+    totalDescent += segmentStats.descent;
+  }
+
+  // 3. Масштабируем под желаемую длительность
+  const actualDurationSec = pointTimesSec[pointTimesSec.length - 1] || 1;
+  const targetDurationSec = durationHours * 3600;
+  const timeScale = targetDurationSec / actualDurationSec;
+
+  const scaledPointTimesHours = pointTimesSec.map(t => (t * timeScale) / 3600);
+
+  // 4. Распределяем погоду по точкам
+  for (let i = 0; i < track.length; i++) {
+    const pointTimeOffsetHours = scaledPointTimesHours[i];
+    
+    let pointWeather = null;
+    if (weatherData && startDateTime) {
+      pointWeather = this.distributeWeatherByTime(weatherData, pointTimeOffsetHours);
+      weatherTimeline.push({
+        point_index: i,
+        coordinates: { lat: track[i].lat, lng: track[i].lng },
+        time_offset_hours: parseFloat(pointTimeOffsetHours.toFixed(2)),
+        estimated_time: this.calculateEstimatedTime(startDateTime, pointTimeOffsetHours),
+        weather: pointWeather,
+      });
+    }
+  }
+
+  // 5. Статистика
+  const statistics = {
+    total_distance: Math.round(totalDistance),
+    total_difficulty: Math.round(totalDifficulty),
+    total_climb: Math.round(totalClimb),
+    total_descent: Math.round(totalDescent),
+    max_elevation: Math.max(...track.map(p => p.elevation)),
+    min_elevation: Math.min(...track.map(p => p.elevation)),
+    avg_slope: totalDistance > 0 ? ((totalClimb / totalDistance) * 100).toFixed(1) : 0,
+    estimated_duration_hours: parseFloat((scaledPointTimesHours[scaledPointTimesHours.length - 1]).toFixed(2)),
+  };
+
+  return { track, statistics, weatherTimeline };
 }
 
-  distributeWeatherByTime(weatherData, timeOffsetHours) {
-    // Находим ближайший временной слот в прогнозе
-    const hourlyData = weatherData.hourly;
-    const timeIndex = Math.min(
-      Math.floor(timeOffsetHours),
-      hourlyData.time.length - 1
-    );
+ distributeWeatherByTime(weatherData, timeOffsetHours) {
+  const hourlyTimes = weatherData.hourly.time; 
+  const targetTimeMs = new Date(hourlyTimes[0]).getTime() + timeOffsetHours * 3600 * 1000;
 
-    return {
-      temperature: hourlyData.temperature_2m[timeIndex],
-      precipitation: hourlyData.precipitation[timeIndex],
-      weathercode: hourlyData.weathercode[timeIndex],
-      windspeed: hourlyData.windspeed_10m[timeIndex],
-      time: hourlyData.time[timeIndex],
-      relative_time: `+${timeOffsetHours.toFixed(1)}ч`,
-    };
+  // Найти индекс ближайшего временного слота
+  let bestIndex = 0;
+  let minDiff = Infinity;
+
+  for (let i = 0; i < hourlyTimes.length; i++) {
+    const slotTimeMs = new Date(hourlyTimes[i]).getTime();
+    const diff = Math.abs(slotTimeMs - targetTimeMs);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestIndex = i;
+    }
   }
+
+  return {
+    temperature: weatherData.hourly.temperature_2m[bestIndex],
+    precipitation: weatherData.hourly.precipitation[bestIndex],
+    weathercode: weatherData.hourly.weathercode[bestIndex],
+    windspeed: weatherData.hourly.windspeed_10m[bestIndex],
+    time: hourlyTimes[bestIndex],
+    relative_time: `+${timeOffsetHours.toFixed(1)}ч`,
+  };
+}
 
   calculateEstimatedTime(startDateTime, offsetHours) {
     const startTime = new Date(startDateTime);

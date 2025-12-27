@@ -1,4 +1,5 @@
 const Router = require('express').Router;
+const authMiddleware = require('../middleware/auth');
 const userController = require('../controllers/user-controller');
 const elevationController = require('../controllers/elevation-controller');
 const locationsController = require('../controllers/locations-controller');
@@ -52,5 +53,7 @@ router.post('/roads/create', routeController.createRoad);
 router.get('/roads/user/:userId', routeController.getRoadsByUser);
 router.get('/roads/:id', routeController.getRoadById);
 router.delete('/roads/:id', routeController.deleteRoad);
+
+router.get('/user/me', authMiddleware, userController.getUserProfile);
 
 module.exports = router;

@@ -151,7 +151,7 @@ const CreateLocationPage = () => {
       const locationData = {
         LocationName: locationName.trim(),
         Coordinates: coordinates, // [lng, lat]
-        Description: description.trim(),
+        Description: 'Описание: ' + description +'\n\n',
         Categories: selectedCategories.map(cat => cat.name).join(', ')
       };
 

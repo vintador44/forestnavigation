@@ -247,7 +247,12 @@ h2 {
     max-width: 300px;
   }
 }
-
+#view-location-desc {
+  white-space: pre-line; /* ← это ключевое правило */
+  font-family: inherit;
+  margin: 0;
+  padding: 0;
+}
 /* --- СТИЛИ ЗАГЛУШКИ ФОТОГРАФИЙ В ПАНЕЛИ ПРОСМОТРА ЛОКАЦИИ --- */
 
 #view-location-container {

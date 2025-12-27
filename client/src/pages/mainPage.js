@@ -1,12 +1,16 @@
 import YandexMap from "./../components/YandexMap";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ViewRoutePanel from "../components/ViewRoutePanel";
+
 
 import ImageCollection from "../components/ImageCollection";
 
 import "../styles/ViewLocationPanel.css";
 
 const MainPage = () => {
+  const [viewRoutePanelOpen, setViewRoutePanelOpen] = useState(false);
+const [selectedRouteId, setSelectedRouteId] = useState(null);
   const [coordinates, setCoordinates] = useState(null);
   const [cordElevation, setCordElevation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,27 +28,114 @@ const MainPage = () => {
   const removeLocations = useRef(null);
   const addRoute = useRef(null);
   const removeRoutes = useRef(null);
-const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [commentText, setCommentText] = useState(""); // Для текста комментария
-const [comments, setComments] = useState([]); // Для хранения списка комментариев
+  const [comments, setComments] = useState([]); // Для хранения списка комментариев
+  // В начало компонента MainPage, после других состояний
+  
 
-const handleCommentSubmit = () => {
-  if (!commentText.trim()) {
-    alert("Ошибка: Поле комментария не может быть пустым.");
-    return;
-  }
-
-  // Вместо отправки — показываем ошибку
-  alert("Ошибка: Отправка комментариев временно недоступна.");
-
-  // (Необязательно) Можно очистить поле ввода после попытки
-  // setCommentText("");
-
-  // (Необязательно) Можно добавить комментарий в список как "заглушку", но с пометкой об ошибке
-  // setComments(prev => [...prev, `${commentText} (Ошибка при отправке)`]);
+// Функция для открытия панели маршрута
+const handleRouteSelect = (routeId) => {
+  console.log("Выбран маршрут с ID:", routeId);
+  setSelectedRouteId(routeId);
+  setViewRoutePanelOpen(true);
 };
 
+// Функция для закрытия панели
+const handleCloseRoutePanel = () => {
+  setViewRoutePanelOpen(false);
+  setSelectedRouteId(null);
+};
+
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim()) {
+      alert("Ошибка: Поле комментария не может быть пустым.");
+      return;
+    }
+
+    if (!locationData?.ID) {
+      alert("Ошибка: Локация не выбрана.");
+      return;
+    }
+
+    try {
+      // 1. Получаем данные пользователя
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Ошибка: Вы не авторизованы.");
+        return;
+      }
+
+      const userRes = await fetch("http://localhost:5000/api/user/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!userRes.ok) {
+        throw new Error("Не удалось загрузить данные пользователя");
+      }
+
+      const userData = await userRes.json();
+      const authorName = userData.FIO || 'Аноним';
+      // 2. Формируем комментарий
+      const now = new Date().toLocaleString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const newCommentLine = `\n[${now}] ${authorName}: ${commentText.trim()}`;
+
+      // 3. Получаем текущую локацию (чтобы не затереть другие поля)
+      const locRes = await fetch(
+        `http://localhost:5000/api/locations/${locationData.ID}`
+      );
+      if (!locRes.ok) throw new Error("Не удалось загрузить локацию");
+      const { location: currentLoc } = await locRes.json();
+
+      // 4. Обновляем Description
+      const updatedDescription =
+        (currentLoc.Description || "") + newCommentLine;
+
+      // 5. Отправляем PATCH/PUT
+      const updateRes = await fetch(
+        `http://localhost:5000/api/locations/${locationData.ID}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            Description: updatedDescription,
+            LocationName: currentLoc.LocationName,
+            Coordinates: currentLoc.Coordinates,
+            Categories: currentLoc.Categories, // сохраните текущие категории
+          }),
+        }
+      );
+
+      if (!updateRes.ok) {
+        const errData = await updateRes.json();
+        throw new Error(errData.error || "Ошибка при сохранении комментария");
+      }
+
+      // 6. Обновляем локально locationData и state
+      const updatedLoc = { ...currentLoc, Description: updatedDescription };
+      setLocationData(updatedLoc);
+
+      // 7. Очищаем поле и показываем успех
+      setCommentText("");
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 2000);
+    } catch (err) {
+      console.error("Ошибка отправки комментария:", err);
+      alert(`Ошибка: ${err.message}`);
+    }
+  
+  };
   // Загрузка маршрутов при монтировании
   useEffect(() => {
     loadRoads();
@@ -68,7 +159,7 @@ const handleCommentSubmit = () => {
     if (roads.length > 0) {
       showRoadsOnMap();
     }
-  }
+  };
 
   const handleLocationSelect = async (id) => {
     try {
@@ -76,30 +167,50 @@ const handleCommentSubmit = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || `Error while fetching locations: ${response.status}`);
+        throw new Error(
+          data.error || `Error while fetching locations: ${response.status}`
+        );
       }
 
       console.log(data);
-
       const loc = data.location;
-      loc.Categories = loc.Categories.split(' ');
+
+      // Нормализуем Categories в массив строк
+      let categories = loc.Categories;
+
+      if (Array.isArray(categories)) {
+        // Уже массив — оставляем, но убеждаемся, что строки
+        categories = categories.map(String).filter(Boolean);
+      } else if (typeof categories === "string") {
+        // Строка — делим по пробелам/запятым и очищаем
+        categories = categories
+          .split(/[\s,]+/) // делим по пробелам ИЛИ запятым
+          .map((s) => s.trim())
+          .filter(Boolean); // убираем пустые
+      } else {
+        // null, undefined, число и т.п.
+        categories = [];
+      }
+
+      loc.Categories = categories;
+      setLocationData(loc);
 
       setLocationData(loc);
-      
+
       setViewLocationPanelOpen(true);
     } catch (err) {
       console.error(err);
       setError(error);
     }
   };
-   const handleUpload = () => {
-    alert('Ошибка загрузки фотографий');
+  const handleUpload = () => {
+    alert("Ошибка загрузки фотографий");
   };
 
   const loadRoads = async () => {
     try {
       console.log("Загрузка маршрутов...");
-      const response = await fetch('http://localhost:5000/api/roads');
+      const response = await fetch("http://localhost:5000/api/roads");
       if (response.ok) {
         const data = await response.json();
         console.log("Получены данные маршрутов:", data);
@@ -110,168 +221,184 @@ const handleCommentSubmit = () => {
         console.error("Ошибка HTTP:", response.status);
       }
     } catch (error) {
-      console.error('Error loading roads:', error);
+      console.error("Error loading roads:", error);
     }
+  };
+
+ const showRoadsOnMap = () => {
+  if (!addRoute.current || !removeRoutes.current) {
+    console.log("Функции карты еще не загружены");
+    return;
   }
 
-  const showRoadsOnMap = () => {
-    if (!addRoute.current || !removeRoutes.current) {
-      console.log("Функции карты еще не загружены");
-      return;
+  console.log("Отображение маршрутов на карте:", roads.length);
+  removeRoutes.current();
+
+  // Вспомогательная функция для получения ключа координат
+  const getCoordKey = (coord) => {
+    if (!coord) return null;
+
+    // GeoJSON: { coordinates: [lng, lat] }
+    if (coord.coordinates && Array.isArray(coord.coordinates)) {
+      return `${coord.coordinates[0].toFixed(6)},${coord.coordinates[1].toFixed(6)}`;
     }
-    
-    console.log("Отображение маршрутов на карте:", roads.length);
-    removeRoutes.current();
-    
-    roads.forEach((road, index) => {
-      console.log(`Обработка маршрута ${index + 1}:`, road);
-      
-      // Преобразуем точки маршрута в координаты для отображения
-      // === СОРТИРУЕМ ТОЧКИ ПО ПОРЯДКУ МАРШРУТА ===
-const sortedDots = sortDotsByOrder(road.dots);
 
-const routeCoordinates = sortedDots.map(dot => {
-  if (dot.ThisDotCoordinates?.coordinates) {
-    const [lng, lat] = dot.ThisDotCoordinates.coordinates;
-    return [lat, lng];
-  } else if (typeof dot.ThisDotCoordinates === 'string') {
-    const match = dot.ThisDotCoordinates.match(/POINT\(([^ ]+) ([^)]+)\)/);
-    if (match) {
-      const lng = parseFloat(match[1]);
-      const lat = parseFloat(match[2]);
-      return [lat, lng];
+    // WKT: "POINT(lng lat)"
+    if (typeof coord === "string") {
+      const match = coord.match(/POINT\(([^ ]+) ([^)]+)\)/);
+      if (match) {
+        return `${parseFloat(match[1]).toFixed(6)},${parseFloat(match[2]).toFixed(6)}`;
+      }
     }
-  }
-  console.warn("Некорректные координаты:", dot);
-  return null;
-}).filter(Boolean);
 
-// === Функция сортировки (вставьте её ВНЕ showRoadsOnMap) ===
-function sortDotsByOrder(dots) {
-  if (!dots || dots.length === 0) return dots;
+    return null;
+  };
 
-  // Строим мапу: ThisDot → Dot
-  const dotMap = new Map();
-  const nextMap = new Map(); // ThisKey → NextKey
+  // Функция сортировки точек по порядку маршрута
+  const sortDotsByOrder = (dots) => {
+    if (!dots || dots.length === 0) return dots;
 
-  dots.forEach(dot => {
-    const thisCoord = getCoordKey(dot.ThisDotCoordinates);
-    const nextCoord = dot.NextDotCoordinates ? getCoordKey(dot.NextDotCoordinates) : null;
-    
-    dotMap.set(thisCoord, dot);
-    if (nextCoord) nextMap.set(thisCoord, nextCoord);
-  });
+    // Строим мапу: ThisDot → Dot
+    const dotMap = new Map();
+    const nextMap = new Map(); // ThisKey → NextKey
 
-  // Находим стартовую точку (её координаты не являются чьим-то Next)
-  let startKey = null;
-  for (let key of dotMap.keys()) {
-    let isStart = true;
-    for (let nextKey of nextMap.values()) {
-      if (nextKey === key) {
-        isStart = false;
+    dots.forEach((dot) => {
+      const thisCoord = getCoordKey(dot.ThisDotCoordinates);
+      const nextCoord = dot.NextDotCoordinates
+        ? getCoordKey(dot.NextDotCoordinates)
+        : null;
+
+      dotMap.set(thisCoord, dot);
+      if (nextCoord) nextMap.set(thisCoord, nextCoord);
+    });
+
+    // Находим стартовую точку (её координаты не являются чьим-то Next)
+    let startKey = null;
+    for (let key of dotMap.keys()) {
+      let isStart = true;
+      for (let nextKey of nextMap.values()) {
+        if (nextKey === key) {
+          isStart = false;
+          break;
+        }
+      }
+      if (isStart) {
+        startKey = key;
         break;
       }
     }
-    if (isStart) {
-      startKey = key;
-      break;
+
+    if (!startKey) startKey = Array.from(dotMap.keys())[0];
+
+    // Собираем маршрут по цепочке
+    const ordered = [];
+    let currentKey = startKey;
+
+    while (currentKey && dotMap.has(currentKey)) {
+      const dot = dotMap.get(currentKey);
+      ordered.push(dot);
+      currentKey = nextMap.get(currentKey) || null;
     }
-  }
 
-  if (!startKey) startKey = Array.from(dotMap.keys())[0];
+    return ordered;
+  };
 
-  // Собираем маршрут по цепочке
-  const ordered = [];
-  let currentKey = startKey;
+  roads.forEach((road, index) => {
+    console.log(`Обработка маршрута ${index + 1}:`, road);
 
-  while (currentKey && dotMap.has(currentKey)) {
-    const dot = dotMap.get(currentKey);
-    ordered.push(dot);
-    currentKey = nextMap.get(currentKey) || null;
-  }
+    // Преобразуем точки маршрута в координаты для отображения
+    const sortedDots = sortDotsByOrder(road.dots);
 
-  return ordered;
-}
+    const routeCoordinates = sortedDots
+      .map((dot) => {
+        if (dot.ThisDotCoordinates?.coordinates) {
+          const [lng, lat] = dot.ThisDotCoordinates.coordinates;
+          return [lat, lng];
+        } else if (typeof dot.ThisDotCoordinates === "string") {
+          const match = dot.ThisDotCoordinates.match(
+            /POINT\(([^ ]+) ([^)]+)\)/
+          );
+          if (match) {
+            const lng = parseFloat(match[1]);
+            const lat = parseFloat(match[2]);
+            return [lat, lng];
+          }
+        }
+        console.warn("Некорректные координаты:", dot);
+        return null;
+      })
+      .filter(Boolean);
 
-// Вспомогательная функция для получения ключа координат
-function getCoordKey(coord) {
-  if (!coord) return null;
-  
-  // GeoJSON: { coordinates: [lng, lat] }
-  if (coord.coordinates && Array.isArray(coord.coordinates)) {
-    return `${coord.coordinates[0].toFixed(6)},${coord.coordinates[1].toFixed(6)}`;
-  }
-  
-  // WKT: "POINT(lng lat)"
-  if (typeof coord === 'string') {
-    const match = coord.match(/POINT\(([^ ]+) ([^)]+)\)/);
-    if (match) {
-      return `${parseFloat(match[1]).toFixed(6)},${parseFloat(match[2]).toFixed(6)}`;
+    console.log(`Координаты маршрута ${index + 1}:`, routeCoordinates);
+
+    if (routeCoordinates.length > 1) {
+      // Создаем обработчик клика для этого маршрута
+      const handleRouteClick = () => {
+        console.log("Клик по маршруту:", road.ID);
+        handleRouteSelect(road.ID);
+      };
+
+      // Передаем все параметры, включая обработчик клика
+      addRoute.current(
+        routeCoordinates,
+        road.Name || `Маршрут ${road.ID}`,
+        road.Description || "Без описания",
+        road.Complexity || "Не указана",
+        handleRouteClick // Добавляем обработчик клика
+      );
+      console.log(`Маршрут ${index + 1} добавлен на карту`);
+    } else {
+      console.warn(
+        `Маршрут ${index + 1} имеет недостаточно точек:`,
+        routeCoordinates.length
+      );
     }
-  }
-  
-  return null;
-}
-
-      console.log(`Координаты маршрута ${index + 1}:`, routeCoordinates);
-
-      if (routeCoordinates.length > 1) {
-        addRoute.current(
-          routeCoordinates,
-          road.Name || `Маршрут ${road.ID}`,
-          road.Description || 'Без описания',
-          road.Complexity || 'Не указана'
-        );
-        console.log(`Маршрут ${index + 1} добавлен на карту`);
-      } else {
-        console.warn(`Маршрут ${index + 1} имеет недостаточно точек:`, routeCoordinates.length);
-      }
-    });
-  }
+  });
+};
 
   const handleSearch = (e) => {
     e.preventDefault();
     console.log("Поиск:", searchQuery);
     showLocations();
-  }
+  };
 
   const handleCoordinatesChange = (newCoordinates) => {
     setCoordinates(newCoordinates);
     setError(null);
-  }
+  };
 
   const handleCordElevationChange = (lat, lng) => {
     if (!lat || !lng) {
       setError("Координаты не получены");
       return;
     }
-    
+
     const now = Date.now();
     if (now - lastRequestRef.current < 1000) {
       setError("Подождите немного перед следующим запросом");
       return;
     }
-    
+
     lastRequestRef.current = now;
     getRealElevation(lat, lng);
-  }
+  };
 
   const handleCreateLandmark = () => {
     if (!coordinates) {
       setError("Сначала выберите точку на карте");
       return;
     }
-    navigate('/create-location', { 
-      state: { 
+    navigate("/create-location", {
+      state: {
         coordinates: coordinates,
-        elevation: cordElevation 
-      } 
+        elevation: cordElevation,
+      },
     });
-  }
+  };
 
   const handleCreateRoute = () => {
-    navigate('/create-route');
-  }
+    navigate("/create-route");
+  };
 
   const showLocations = () => {
     const locations = getLocations(searchQuery);
@@ -279,39 +406,40 @@ function getCoordKey(coord) {
       if (removeLocations.current && addLocation.current) {
         removeLocations.current();
         value.locations.forEach((loc) => {
-          addLocation.current(loc.LocationName,
+          addLocation.current(
+            loc.LocationName,
             loc.Description,
             loc.Coordinates,
-            loc.ID);
+            loc.ID
+          );
         });
       }
     });
-  }
+  };
 
   async function getRealElevation(lat, lng) {
     if (!lat || !lng) return;
-    
+
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch(
         `http://localhost:5000/api/elevation?lat=${lat}&lng=${lng}`
       );
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || `Server error: ${response.status}`);
       }
-      
+
       if (data.success) {
         setCordElevation(data.elevation);
       } else {
-        throw new Error(data.error || 'Failed to get elevation');
+        throw new Error(data.error || "Failed to get elevation");
       }
-      
     } catch (error) {
-      console.error('Error fetching elevation:', error);
+      console.error("Error fetching elevation:", error);
       setError(error.message);
       setCordElevation(null);
     } finally {
@@ -325,7 +453,8 @@ function getCoordKey(coord) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/locations' + (tagString ? `?tags=${tagString}` : '')
+        "http://localhost:5000/api/locations" +
+          (tagString ? `?tags=${tagString}` : "")
       );
 
       const data = await response.json();
@@ -336,7 +465,7 @@ function getCoordKey(coord) {
 
       return data;
     } catch (error) {
-      console.error('Error getting locations:', error);
+      console.error("Error getting locations:", error);
       setError(error.message);
       return { locations: [] };
     }
@@ -344,25 +473,30 @@ function getCoordKey(coord) {
 
   return (
     <div className="main-page">
-      <div style={{ position: 'relative', width: '100%' ,height: '80%'}}>
+      <div style={{ position: "relative", width: "100%", height: "80%" }}>
         <YandexMap
           onMapLoad={handleMapLoad}
-          onCoordinatesChange={handleCoordinatesChange} 
-          onElevationChange={handleCordElevationChange} 
+          onCoordinatesChange={handleCoordinatesChange}
+          onElevationChange={handleCordElevationChange}
           onLocationSelect={handleLocationSelect}
         />
-        
+
         {/* Панель поиска */}
-        <div style={{
-          position: 'absolute',
-          top: '20px',
-          left: '23%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          width: '90%',
-          maxWidth: '500px'
-        }}>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px' }}>
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            left: "23%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            width: "90%",
+            maxWidth: "500px",
+          }}
+        >
+          <form
+            onSubmit={handleSearch}
+            style={{ display: "flex", gap: "10px" }}
+          >
             <input
               type="text"
               value={searchQuery}
@@ -370,25 +504,25 @@ function getCoordKey(coord) {
               placeholder="Поиск по тегам"
               style={{
                 flex: 1,
-                padding: '12px 16px',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                outline: 'none'
+                padding: "12px 16px",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "16px",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                outline: "none",
               }}
             />
             <button
               type="submit"
               style={{
-                padding: '12px 20px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+                padding: "12px 20px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "16px",
+                cursor: "pointer",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
               }}
             >
               Найти
@@ -398,154 +532,140 @@ function getCoordKey(coord) {
       </div>
 
       <div className="botContainer">
-        <button 
+        <button
           className="action-button"
           onClick={handleCreateLandmark}
           disabled={!coordinates}
         >
           Создать достопримечательность
         </button>
-       
+
         <div className="coordinates-info">
-          <div><strong>Широта:</strong> {coordinates?.[0]?.toFixed(5) ?? "Null"}</div>
-          <div><strong>Долгота:</strong> {coordinates?.[1]?.toFixed(5) ?? "Null"}</div>
           <div>
-           
+            <strong>Широта:</strong> {coordinates?.[0]?.toFixed(5) ?? "Null"}
           </div>
-          
-          {error && (
-            <div className="error-message">
-              Ошибка: {error}
-            </div>
-          )}
+          <div>
+            <strong>Долгота:</strong> {coordinates?.[1]?.toFixed(5) ?? "Null"}
+          </div>
+          <div></div>
+
+          {error && <div className="error-message">Ошибка: {error}</div>}
         </div>
-        
-        <button 
-          className="action-button"
-          onClick={handleCreateRoute}
-        >
+
+        <button className="action-button" onClick={handleCreateRoute}>
           Создать маршрут
         </button>
       </div>
 
-  { viewLocationPanelOpen &&
-  <div id="backdrop">
-    <div id="view-location-container">
+      {viewLocationPanelOpen && (
+        <div id="backdrop">
+          <div id="view-location-container">
+            {/* Заголовк локации */}
+            <div id="view-location-header">
+              {/* Название локации */}
+              <h1>{locationData.LocationName}</h1>
 
-      {/* Заголовк локации */}
-      <div id="view-location-header">
-        {/* Название локации */}
-        <h1>{locationData.LocationName}</h1>
+              {/* Кнопка закрытия */}
+              <button
+                id="view-location-close-button"
+                onClick={(_) => setViewLocationPanelOpen(false)}
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
 
-        {/* Кнопка закрытия */}
-        <button id="view-location-close-button"
-          onClick={(_) => setViewLocationPanelOpen(false)}
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
+            {/* Фотографии */}
+            <ImageCollection uploadHandler={handleUpload} readOnly />
 
-      {/* Фотографии */}
-      <ImageCollection uploadHandler={ handleUpload } readOnly />
+            <div id="view-location-comments-section">
+              <h3 style={{ paddingLeft: "40px" }}>Комментарии</h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCommentSubmit(); // Вызываем функцию отправки
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    marginBottom: "12px",
+                    width: "98%",
+                    paddingLeft: "40px",
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Добавить комм"
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "8px 12px",
+                      backgroundColor: "#007bff",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ➤
+                  </button>
+                </div>
+              </form>
+            </div>
+            {/* === КОНЕЦ НОВОГО БЛОКА === */}
 
-      {/* === НОВЫЙ БЛОК: ЗАГЛУШКА КОММЕНТАРИЕВ === */}
-      <div id="view-location-comments-section">
-        <h3>Комментарии</h3>
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleCommentSubmit(); // Вызываем функцию отправки
-        }}>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Добавить комм"
-              style={{
-                flex: 1,
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                padding: '8px 12px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              ➤
-            </button>
-          </div>
-        </form>
+            <div id="view-location-data-container">
+              {/* Описание */}
+              <p id="view-location-desc">{locationData.Description}</p>
 
-        {/* Область для отображения комментариев */}
-        <div
-          id="view-location-comments-list"
-          style={{
-            maxHeight: '150px',
-            overflowY: 'auto',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            padding: '8px',
-            backgroundColor: '#f9f9f9'
-          }}
-        >
-          {comments.length > 0 ? (
-            comments.map((comment, index) => (
-              <div key={index} style={{ marginBottom: '8px', padding: '4px', borderBottom: '1px solid #eee' }}>
-                <strong>Максим:</strong> {comment}
+              {/* Координаты и высота */}
+              <div id="view-location-coordinates-info">
+                <p>
+                  <strong>Координаты:</strong>{" "}
+                  {locationData.Coordinates[0].toFixed(6)},{" "}
+                  {locationData.Coordinates[1].toFixed(6)}
+                </p>
               </div>
-            ))
-          ) : (
-            <p style={{ fontStyle: 'italic', color: '#666' }}>Спасибо!</p>
-          )}
-        </div>
-      </div>
-      {/* === КОНЕЦ НОВОГО БЛОКА === */}
 
-      <div id="view-location-data-container">
-        {/* Описание */}
-        <p id="view-location-desc">
-          {locationData.Description}
-        </p>
+              <hr></hr>
 
-        {/* Координаты и высота */}
-        <div id="view-location-coordinates-info">
-          <p><strong>Координаты:</strong> {locationData.Coordinates[0].toFixed(6)}, {locationData.Coordinates[1].toFixed(6)}</p>
-        </div>
-
-        <hr></hr>
-
-        {/* Категории */}
-        <div>
-          <h6 className="view-location-label">Категории:</h6>
-          <div id="view-location-categories">
-            {locationData.Categories.length > 0 ? (
+              {/* Категории */}
               <div>
-                {locationData.Categories.map(cat => (
-                  <span key={cat} className="view-location-category-tag">
-                    {cat}
-                  </span>
-                ))}
+                <h6 className="view-location-label">Категории:</h6>
+               <div id="view-location-categories">
+  {Array.isArray(locationData.Categories) && locationData.Categories.length > 0 ? (
+    locationData.Categories.map(cat => (
+      <span key={cat} className="view-location-category-tag">
+        {String(cat)}
+      </span>
+    ))
+  ) : (
+    <p id="view-location-empty-categories">Нет категорий</p>
+  )}
+</div>
               </div>
-            ) : (
-              <p id="view-location-empty-categories">
-                Нет категорий
-              </p>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-}
+      )}
+      {viewRoutePanelOpen && (
+  <ViewRoutePanel
+    routeId={selectedRouteId}
+    onClose={handleCloseRoutePanel}
+    isOpen={viewRoutePanelOpen}
+  />
+)}
     </div>
   );
 };

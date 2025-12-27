@@ -21,6 +21,7 @@
     "express-validator": "^6.11.1",
     "express-ws": "^5.0.2",
     "jsonwebtoken": "^8.5.1",
+    "multer": "^2.0.2",
     "nodemailer": "^6.6.1",
     "pg": "^8.14.1",
     "sequelize": "^6.37.7",

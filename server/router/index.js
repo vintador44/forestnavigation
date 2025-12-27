@@ -6,6 +6,7 @@ const locationsController = require('../controllers/locations-controller');
 const weatherController = require('../controllers/weather-controller');
 const routeController = require('../controllers/route-controller.js');
 const categoryController = require('../controllers/categories-controller.js');
+const photoController = require('../controllers/photo-controller');
 
 /** @type {Router} */
 const router = new Router();
@@ -55,5 +56,11 @@ router.get('/roads/:id', routeController.getRoadById);
 router.delete('/roads/:id', routeController.deleteRoad);
 
 router.get('/user/me', authMiddleware, userController.getUserProfile);
+
+
+router.post('/upload', photoController.uploadPhotos);
+
+
+router.get('/photos/location/:locationId', photoController.getPhotosByLocation);
 
 module.exports = router;

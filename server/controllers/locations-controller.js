@@ -74,6 +74,8 @@ class LocationController {
       next(e);
     }
   }
+  // В locations-controller.js
+
 
   async getLocationById(req, res, next) {
     try {

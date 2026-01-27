@@ -319,12 +319,7 @@ const CreateRoadPage = () => {
     }
   };
 
-  const handleContinue = async () => {
-    const success = await saveRouteToDatabase();
-    if (success) {
-      console.log("Продолжение работы с маршрутом");
-    }
-  };
+  
 
   const handleCoordinatesChange = (coords) => {
     if (
@@ -573,13 +568,7 @@ const CreateRoadPage = () => {
             >
               {isSubmitting ? "Сохранение..." : "Опубликовать"}
             </button>
-            <button
-              className="continue-btn"
-              onClick={handleContinue}
-              disabled={!routeData || isLoadingRoute || isSubmitting}
-            >
-              {isSubmitting ? "Сохранение..." : "Продолжить"}
-            </button>
+            
           </div>
         </div>
       </div>

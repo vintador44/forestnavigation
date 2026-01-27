@@ -28,22 +28,21 @@ const MainPage = () => {
   const removeRoutes = useRef(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [commentText, setCommentText] = useState(""); // Для текста комментария
-  const [comments, setComments] = useState([]); // Для хранения списка комментариев
-  // В начале компонента MainPage, после других useState:
+  const [commentText, setCommentText] = useState(""); 
+  const [comments, setComments] = useState([]); 
+
   const [locationPhotos, setLocationPhotos] = useState([]);
   
-  // Получаем базовый URL из конфигурации
+
   const API_BASE_URL = API_KEYS.API_URL;
 
-  // Функция для открытия панели маршрута
   const handleRouteSelect = (routeId) => {
     console.log("Выбран маршрут с ID:", routeId);
     setSelectedRouteId(routeId);
     setViewRoutePanelOpen(true);
   };
 
-  // Функция для закрытия панели
+
   const handleCloseRoutePanel = () => {
     setViewRoutePanelOpen(false);
     setSelectedRouteId(null);
@@ -61,7 +60,7 @@ const MainPage = () => {
     }
 
     try {
-      // 1. Получаем данные пользователя
+
       const token = localStorage.getItem("token");
       if (!token) {
         alert("Ошибка: Вы не авторизованы.");
@@ -78,7 +77,7 @@ const MainPage = () => {
 
       const userData = await userRes.json();
       const authorName = userData.FIO || "Аноним";
-      // 2. Формируем комментарий
+
       const now = new Date().toLocaleString("ru-RU", {
         day: "2-digit",
         month: "2-digit",
@@ -89,18 +88,18 @@ const MainPage = () => {
 
       const newCommentLine = `\n[${now}] ${authorName}: ${commentText.trim()}`;
 
-      // 3. Получаем текущую локацию (чтобы не затереть другие поля)
+
       const locRes = await fetch(
         `${API_BASE_URL}/locations/${locationData.ID}`
       );
       if (!locRes.ok) throw new Error("Не удалось загрузить локацию");
       const { location: currentLoc } = await locRes.json();
 
-      // 4. Обновляем Description
+
       const updatedDescription =
         (currentLoc.Description || "") + newCommentLine;
 
-      // 5. Отправляем PATCH/PUT
+
       const updateRes = await fetch(
         `${API_BASE_URL}/locations/${locationData.ID}`,
         {
@@ -113,7 +112,7 @@ const MainPage = () => {
             Description: updatedDescription,
             LocationName: currentLoc.LocationName,
             Coordinates: currentLoc.Coordinates,
-            Categories: currentLoc.Categories, // сохраните текущие категории
+            Categories: currentLoc.Categories, 
           }),
         }
       );
@@ -123,11 +122,11 @@ const MainPage = () => {
         throw new Error(errData.error || "Ошибка при сохранении комментария");
       }
 
-      // 6. Обновляем локально locationData и state
+    
       const updatedLoc = { ...currentLoc, Description: updatedDescription };
       setLocationData(updatedLoc);
 
-      // 7. Очищаем поле и показываем успех
+     
       setCommentText("");
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 2000);
@@ -137,17 +136,17 @@ const MainPage = () => {
     }
   };
   
-  // Загрузка маршрутов при монтировании
+
   useEffect(() => {
     loadRoads();
   }, []);
 
-  // Показываем маршруты на карте когда данные загружены или обновлены
+
   useEffect(() => {
     if (roads.length > 0 && addRoute.current) {
       showRoadsOnMap();
     }
-  }, [roads, addRoute.current]); // Добавляем зависимость от roads и addRoute.current
+  }, [roads, addRoute.current]);
 
   const handleMapLoad = (addLocFn, removeLocFn, addRouteFn, removeRouteFn) => {
     addLocation.current = addLocFn;
@@ -156,7 +155,7 @@ const MainPage = () => {
     removeRoutes.current = removeRouteFn;
 
     showLocations();
-    // Показываем маршруты если они уже загружены
+
     if (roads.length > 0) {
       showRoadsOnMap();
     }
@@ -164,7 +163,7 @@ const MainPage = () => {
 
   const handleLocationSelect = async (id) => {
     try {
-      // 1. Получаем локацию
+
       const response = await fetch(`${API_BASE_URL}/locations/${id}`);
       const data = await response.json();
 
@@ -176,7 +175,7 @@ const MainPage = () => {
 
       const loc = data.location;
 
-      // Нормализуем категории
+    
       let categories = loc.Categories;
       if (Array.isArray(categories)) {
         categories = categories.map(String).filter(Boolean);
@@ -192,7 +191,7 @@ const MainPage = () => {
 
       setLocationData(loc);
 
-      // 2. Загружаем фотографии
+
       const photosRes = await fetch(
         `${API_BASE_URL}/photos/location/${id}`
       );
@@ -251,18 +250,18 @@ const MainPage = () => {
     console.log("Отображение маршрутов на карте:", roads.length);
     removeRoutes.current();
 
-    // Вспомогательная функция для получения ключа координат
+
     const getCoordKey = (coord) => {
       if (!coord) return null;
 
-      // GeoJSON: { coordinates: [lng, lat] }
+
       if (coord.coordinates && Array.isArray(coord.coordinates)) {
         return `${coord.coordinates[0].toFixed(
           6
         )},${coord.coordinates[1].toFixed(6)}`;
       }
 
-      // WKT: "POINT(lng lat)"
+  
       if (typeof coord === "string") {
         const match = coord.match(/POINT\(([^ ]+) ([^)]+)\)/);
         if (match) {
@@ -275,13 +274,13 @@ const MainPage = () => {
       return null;
     };
 
-    // Функция сортировки точек по порядку маршрута
+  
     const sortDotsByOrder = (dots) => {
       if (!dots || dots.length === 0) return dots;
 
-      // Строим мапу: ThisDot → Dot
+
       const dotMap = new Map();
-      const nextMap = new Map(); // ThisKey → NextKey
+      const nextMap = new Map(); 
 
       dots.forEach((dot) => {
         const thisCoord = getCoordKey(dot.ThisDotCoordinates);
@@ -293,7 +292,7 @@ const MainPage = () => {
         if (nextCoord) nextMap.set(thisCoord, nextCoord);
       });
 
-      // Находим стартовую точку (её координаты не являются чьим-то Next)
+
       let startKey = null;
       for (let key of dotMap.keys()) {
         let isStart = true;
@@ -311,7 +310,7 @@ const MainPage = () => {
 
       if (!startKey) startKey = Array.from(dotMap.keys())[0];
 
-      // Собираем маршрут по цепочке
+      
       const ordered = [];
       let currentKey = startKey;
 
@@ -327,7 +326,7 @@ const MainPage = () => {
     roads.forEach((road, index) => {
       console.log(`Обработка маршрута ${index + 1}:`, road);
 
-      // Преобразуем точки маршрута в координаты для отображения
+
       const sortedDots = sortDotsByOrder(road.dots);
 
       const routeCoordinates = sortedDots
@@ -353,19 +352,19 @@ const MainPage = () => {
       console.log(`Координаты маршрута ${index + 1}:`, routeCoordinates);
 
       if (routeCoordinates.length > 1) {
-        // Создаем обработчик клика для этого маршрута
+
         const handleRouteClick = () => {
           console.log("Клик по маршруту:", road.ID);
           handleRouteSelect(road.ID);
         };
 
-        // Передаем все параметры, включая обработчик клика
+
         addRoute.current(
           routeCoordinates,
           road.Name || `Маршрут ${road.ID}`,
           road.Description || "Без описания",
           road.Complexity || "Не указана",
-          handleRouteClick // Добавляем обработчик клика
+          handleRouteClick 
         );
         console.log(`Маршрут ${index + 1} добавлен на карту`);
       } else {
@@ -503,7 +502,7 @@ const MainPage = () => {
           apiKey={API_KEYS.YANDEX_MAPS}
         />
 
-        {/* Панель поиска */}
+   
         <div
           style={{
             position: "absolute",
@@ -562,17 +561,7 @@ const MainPage = () => {
           Создать достопримечательность
         </button>
 
-        <div className="coordinates-info">
-          <div>
-            <strong>Широта:</strong> {coordinates?.[0]?.toFixed(5) ?? "Null"}
-          </div>
-          <div>
-            <strong>Долгота:</strong> {coordinates?.[1]?.toFixed(5) ?? "Null"}
-          </div>
-          <div></div>
-
-          {error && <div className="error-message">Ошибка: {error}</div>}
-        </div>
+       
 
         <button className="action-button" onClick={handleCreateRoute}>
           Создать маршрут
@@ -582,9 +571,9 @@ const MainPage = () => {
       {viewLocationPanelOpen && (
         <div id="backdrop">
           <div id="view-location-container">
-            {/* Заголовк локации */}
+           
             <div id="view-location-header">
-              {/* Название локации */}
+        
               <h1>{locationData.LocationName}</h1>
 
               {/* Кнопка закрытия */}

@@ -88,8 +88,25 @@ const ImageCollection = forwardRef(({
           <button
             type="button"
             onClick={addImage}
-            className="create-location-button"
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#4f46e5",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "500",
+              fontSize: "14px",
+              margin: "12px 0",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "background-color 0.2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#4338ca"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#4f46e5"}
           >
+            <span style={{ fontSize: "16px" }}>+</span>
             Добавить фото
           </button>
         )}
@@ -163,7 +180,7 @@ const ImageCollection = forwardRef(({
             </div>
 
             {hasNextImage && (
-              <img
+              <img  
                 className="image"
                 src={getPreviewUrl(currentImage + 1)}
                 style={{

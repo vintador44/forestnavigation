@@ -337,39 +337,33 @@ const CreateLocationPage = () => {
   }
 
   return (
-    <div className="create-location-container">
-      {error && (
-        <div className="create-location-error-message">
-          Ошибка при создании локации: {error}
-        </div>
-      )}
-
-      <div className="create-location-map-container">
-        <YandexMap
-          onMapLoad={handleMapLoad}
-          onCoordinatesChange={handleCoordinatesChange}
-          onMapClick={handleMapClick}
-        />
-        <div className="create-location-map-hint">
-          Нажмите на карту, чтобы выбрать локацию
-        </div>
+  <div className="create-location-container">
+    {error && (
+      <div className="create-location-error-message">
+        Ошибка при создании локации: {error}
       </div>
+    )}
 
-      {displayCoordinates && (
-        <div className="create-location-coordinates-info">
-          <p>
-            <strong>Координаты:</strong> {displayCoordinates[0].toFixed(6)},{" "}
-            {displayCoordinates[1].toFixed(6)}
-          </p>
-        </div>
-      )}
-
-      <ImageCollection
-        ref={photoCollectionRef}
-        uploadHandler={handleUpload}
+    <div className="create-location-map-container">
+      <YandexMap
+        onMapLoad={handleMapLoad}
+        onCoordinatesChange={handleCoordinatesChange}
+        onMapClick={handleMapClick}
       />
+      <div className="create-location-map-hint">
+        Нажмите на карту, чтобы выбрать локацию
+      </div>
+    </div>
 
-      <form onSubmit={handleSubmit} className="create-location-form">
+   
+
+    <ImageCollection
+      ref={photoCollectionRef}
+      uploadHandler={handleUpload}
+    />
+
+    <form onSubmit={handleSubmit} className="create-location-form">
+      <div className="create-location-form-fields">
         <div className="create-location-form-group">
           <label htmlFor="locationName" className="create-location-label">
             Название локации *
@@ -461,9 +455,10 @@ const CreateLocationPage = () => {
             {submitLoading ? "Создание..." : "Создать локацию"}
           </button>
         </div>
-      </form>
-    </div>
-  );
+      </div>
+    </form>
+  </div>
+);
 };
 
 export default CreateLocationPage;

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import YandexMap from "../components/CreateRoadYandexMap";
 import "../styles/CreateRoadPage.css";
+import { API_KEYS } from "../utils/consts"; // Добавьте импорт
 
 const CreateRoadPage = () => {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ const CreateRoadPage = () => {
   const [routeData, setRouteData] = useState(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Получаем базовый URL из конфигурации
+  const API_BASE_URL = API_KEYS.API_URL;
 
   // Получаем пользователя из localStorage
   const getUserFromStorage = () => {
@@ -55,8 +59,9 @@ const CreateRoadPage = () => {
 
         const startDateTime = `${startDate}T${startTime}:00`;
 
+        // Используем API_BASE_URL вместо жестко прописанного URL
         const response = await fetch(
-          `http://localhost:5000/api/route/elevations?` +
+          `${API_BASE_URL}/route/elevations?` +
             `startLat=${startPoint.coords[0]}&startLng=${startPoint.coords[1]}&` +
             `endLat=${endPoint.coords[0]}&endLng=${endPoint.coords[1]}&` +
             `startDateTime=${startDateTime}&durationHours=${durationHours}`
@@ -94,12 +99,12 @@ const CreateRoadPage = () => {
       setIsLoadingRoute(false);
     }
     console.log("Запрос маршрута:", {
-  points: points.length,
-  durationHours: durationHours,
-  type: typeof durationHours,
-  isFinite: isFinite(durationHours),
-  startDateTime: `${startDate}T${startTime}:00`
-});
+      points: points.length,
+      durationHours: durationHours,
+      type: typeof durationHours,
+      isFinite: isFinite(durationHours),
+      startDateTime: `${startDate}T${startTime}:00`
+    });
   };
 
   // Объединение данных всех сегментов маршрута
@@ -194,13 +199,14 @@ const CreateRoadPage = () => {
 
     allTrack.sort((a, b) => a.globalIndex - b.globalIndex);
     console.log("Финальный routeTrack (первые 5 точек):", 
-  allTrack.slice(0, 5).map(p => ({
-    lat: p.lat,
-    lng: p.lng,
-    globalIndex: p.globalIndex,
-    time_offset_hours: p.time_offset_hours
-  }))
-);
+      allTrack.slice(0, 5).map(p => ({
+        lat: p.lat,
+        lng: p.lng,
+        globalIndex: p.globalIndex,
+        time_offset_hours: p.time_offset_hours
+      }))
+    );
+    
     return {
       track: allTrack,
       weatherTimeline: allWeather,
@@ -276,7 +282,8 @@ const CreateRoadPage = () => {
 
       console.log("Отправляемые данные:", routeDataToSend);
 
-      const response = await fetch('http://localhost:5000/api/roads/create', {
+      // Используем API_BASE_URL вместо жестко прописанного URL
+      const response = await fetch(`${API_BASE_URL}/roads/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -448,8 +455,6 @@ const CreateRoadPage = () => {
       />
 
       <div className="floating-controls">
-        
-
         <div className="panel">
           <h3>Создание маршрута</h3>
 

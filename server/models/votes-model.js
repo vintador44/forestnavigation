@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
+  
   Vote.init({
     ID: {
       type: DataTypes.INTEGER,

@@ -1,4 +1,4 @@
-// src/components/ImageCollection.jsx
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import "../styles/ImageCollection.css";
 

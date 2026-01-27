@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
+  
   Road.init({
     ID: {
       type: DataTypes.INTEGER,

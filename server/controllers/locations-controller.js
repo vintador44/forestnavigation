@@ -12,7 +12,7 @@ class LocationController {
     }
   }
 
-  // ✅ ИСПРАВЛЕННЫЙ МЕТОД: через locationsService
+ 
   async updateLocation(req, res, next) {
     try {
       const { id } = req.params;
@@ -22,7 +22,7 @@ class LocationController {
         return res.status(400).json({ success: false, error: 'ID обязателен' });
       }
 
-      // Валидация и преобразование координат (если переданы)
+     
       let geoCoords = undefined;
       if (Coordinates) {
         if (!Array.isArray(Coordinates) || Coordinates.length !== 2) {
@@ -74,8 +74,6 @@ class LocationController {
       next(e);
     }
   }
-  // В locations-controller.js
-
 
   async getLocationById(req, res, next) {
     try {

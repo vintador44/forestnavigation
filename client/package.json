@@ -21,7 +21,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-optional-chaining": "^7.21.0"
   },
-  "scripts": {
+ "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

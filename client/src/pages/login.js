@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { API_KEYS } from "../utils/consts"; 
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -7,6 +8,10 @@ const Login = () => {
   const [error_email, setErrorEmail] = useState("");
   const [error_password, setErrorPassword] = useState("");
   const navigate = useNavigate();
+  
+
+  const API_BASE_URL = API_KEYS.API_URL;
+  
   const handleEmail = (value) => {
     setEmail(value);
     setErrorEmail("");
@@ -26,7 +31,8 @@ const Login = () => {
       return setErrorPassword("Пароль должен быть от 3 до 32 символов");
     setErrorPassword("");
 
-    const request = await fetch("http://localhost:5000/api/login", {
+    // Используем API_BASE_URL вместо жестко прописанного URL
+    const request = await fetch(`${API_BASE_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -34,12 +40,12 @@ const Login = () => {
     const data = await request.json();
 
     if (request.ok && data.user) {
-  // ✅ Сохраняем ТОКЕН (главное!) + данные пользователя
-  localStorage.setItem("token", data.token); // ← новая строка
-  localStorage.setItem("user", JSON.stringify(data.user));
-  
-  navigate("/mainPage");
-}
+
+      localStorage.setItem("token", data.token); 
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      navigate("/mainPage");
+    }
     else {
       if (!data.message) data.message = "не удалось войти";
       alert(`Ошибка: ${data.message}`);
@@ -47,7 +53,7 @@ const Login = () => {
     }
   };
 
-  // TODO: сделать форму смены пароля
+
   return (
     <div className="login-container">
       <h1>Авторизация</h1>

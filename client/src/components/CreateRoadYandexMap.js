@@ -63,22 +63,22 @@ const YandexMap = ({ onCoordinatesChange, permanentPoints = [], routeTrack = [],
     };
   }, []);
 
-  // Обновление точек и маршрута
+
   useEffect(() => {
     if (!map) return;
     
     try {
-      // Очищаем карту
+      
       map.geoObjects.removeAll();
 
-      // Добавляем основные точки
+      
       permanentPoints.forEach((coords, i) => {
         const weatherInfo = routeWeather.find(w => w.point_index === i);
         let balloonContent = `Точка ${i + 1}`;
         
         if (weatherInfo && weatherInfo.weather) {
-          balloonContent += `<br/>⏱️ ${new Date(weatherInfo.estimated_time).toLocaleTimeString('ru-RU')}`;
-          balloonContent += `<br/>🌡️ ${weatherInfo.weather.temperature}°C`;
+          balloonContent += `<br/> ${new Date(weatherInfo.estimated_time).toLocaleTimeString('ru-RU')}`;
+          balloonContent += `<br/> ${weatherInfo.weather.temperature}°C`;
         }
 
         const pm = new window.ymaps.Placemark(
@@ -94,12 +94,12 @@ const YandexMap = ({ onCoordinatesChange, permanentPoints = [], routeTrack = [],
         map.geoObjects.add(pm);
       });
 
-      // Добавляем временную точку
+      
       if (tempMarker) {
         map.geoObjects.add(tempMarker);
       }
 
-      // Создаём линию между основными точками
+      
       if (permanentPoints.length > 1) {
         const line = new window.ymaps.Polyline(
           permanentPoints,
@@ -112,7 +112,7 @@ const YandexMap = ({ onCoordinatesChange, permanentPoints = [], routeTrack = [],
         map.geoObjects.add(line);
       }
 
-      // Отрисовываем детальный трек маршрута
+      
       if (routeTrack.length > 1) {
         const trackCoordinates = routeTrack.map(point => [point.lat, point.lng]);
         const routeLine = new window.ymaps.Polyline(

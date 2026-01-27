@@ -13,7 +13,7 @@ class UserController {
 
             const { email, password, FIO } = req.body;
             
-            // Проверяем обязательные поля
+       
             if (!FIO) {
                 return next(ApiError.BadRequest('ФИО является обязательным полем'));
             }
@@ -56,7 +56,7 @@ class UserController {
 
     async getUserProfile(req, res, next) {
         try {
-            // Предполагается, что ID пользователя сохраняется в req.user после аутентификации
+          
             const userId = req.user?.ID || req.user?.id;
             
             if (!userId) {
@@ -126,7 +126,7 @@ class UserController {
                 return next(ApiError.UnauthorizedError());
             }
 
-            // Для администраторов можно добавить возможность удалять других пользователей
+           
             const targetUserId = req.params.id || userId;
             
             const result = await userService.deleteUser(targetUserId);

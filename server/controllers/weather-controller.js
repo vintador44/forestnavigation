@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const WeatherController = {
-  // Попробуем другой ключ или проверим текущий
+ 
   API_KEY: "32e393b98723e6676345497f0ce2ccc8",
 
 
@@ -9,10 +9,10 @@ const WeatherController = {
     const { 
       lat, 
       lng, 
-      fromDate,  // Начальная дата (YYYY-MM-DD)
-      toDate,    // Конечная дата (YYYY-MM-DD)
-      fromDateTime, // Начальная дата-время (YYYY-MM-DD HH:MM:SS)
-      toDateTime    // Конечная дата-время (YYYY-MM-DD HH:MM:SS)
+      fromDate,  
+      toDate,    
+      fromDateTime, 
+      toDateTime    
     } = req.query;
 
     try {
@@ -23,15 +23,15 @@ const WeatherController = {
 
       let forecastList = data.list;
 
-      // Фильтрация по диапазону дат
+      
       if (fromDate && toDate) {
         forecastList = forecastList.filter(item => {
-          const itemDate = item.dt_txt.split(' ')[0]; // Берем только дату
+          const itemDate = item.dt_txt.split(' ')[0]; 
           return itemDate >= fromDate && itemDate <= toDate;
         });
       }
 
-      // Фильтрация по точному диапазону дата-время
+   
       if (fromDateTime && toDateTime) {
         forecastList = forecastList.filter(item => {
           return item.dt_txt >= fromDateTime && item.dt_txt <= toDateTime;
@@ -51,7 +51,7 @@ const WeatherController = {
         humidity: item.main.humidity,
         wind: Math.round(item.wind.speed * 10) / 10,
         pressure: item.main.pressure,
-        pop: Math.round(item.pop * 100) // вероятность осадков в %
+        pop: Math.round(item.pop * 100) 
       }));
 
       res.json({
@@ -83,7 +83,7 @@ const WeatherController = {
     }
 
     try {
-      // Используем HTTPS и правильный формат параметров
+    
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&lang=ru&appid=32e393b98723e6676345497f0ce2ccc8`;
       
       

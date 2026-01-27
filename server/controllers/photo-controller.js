@@ -1,10 +1,10 @@
-// src/controllers/PhotoController.js
+
 const photoService = require('../service/photo-service');
 const multer = require('multer');
 const path = require('path');
 
-// Настройка multer для обработки multipart/form-data
-const storage = multer.memoryStorage(); // храним в памяти → потом в BLOB
+
+const storage = multer.memoryStorage(); 
 const upload = multer({
   storage: storage,
   limits: {
@@ -24,17 +24,17 @@ const upload = multer({
 });
 
 class PhotoController {
-  // POST /api/photos/upload
+
   async uploadPhotos(req, res, next) {
     try {
-      // Применяем middleware
+ 
       upload.array('photos', 5)(req, res, async (err) => {
         if (err) {
           return res.status(400).json({ success: false, error: err.message });
         }
 
         const { locationId, userId } = req.body;
-        const photos = req.files; // массив буферов
+        const photos = req.files; 
 
         if (!locationId || isNaN(locationId)) {
           return res.status(400).json({ success: false, error: 'locationId обязателен' });
@@ -67,7 +67,7 @@ class PhotoController {
       next(e);
     }
   }
-  // GET /photos/location/:locationId
+
 async getPhotosByLocation(req, res, next) {
   try {
     const { locationId } = req.params;
@@ -78,12 +78,12 @@ async getPhotosByLocation(req, res, next) {
 
     const photos = await photoService.getPhotosByLocation(parseInt(locationId, 10));
 
-    // Преобразуем BLOB (Buffer) → Base64 для передачи в JSON (опционально — можно отдавать как бинарник, но Base64 удобнее для фронтенда)
+   
     const photosWithBase64 = photos.map(p => ({
       ID: p.ID,
       UserID: p.UserID,
       LocationID: p.LocationID,
-      mimetype: p.mimetype || 'image/jpeg', // вы можете хранить mimetype в БД, если нужно — сейчас его нет в модели
+      mimetype: p.mimetype || 'image/jpeg', 
       base64: p.PhotoBYTEA.toString('base64')
     }));
 

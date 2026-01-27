@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { isEmail } from 'validator';
-
+import { API_KEYS } from "../utils/consts"; 
 export const Registration = () => {
   const [, setState] = useState(null);
 
@@ -14,6 +14,9 @@ export const Registration = () => {
   const [error_password, setErrorPassword] = useState("");
   const [error_password2, setErrorPassword2] = useState("");
   const [error_FIO, setErrorFIO] = useState("");
+
+
+  const API_BASE_URL = API_KEYS.API_URL;
 
   const handleEmail = (value) => {
     setEmail(value);
@@ -65,7 +68,8 @@ export const Registration = () => {
       return setErrorPassword2("Пароль не подходит");
     setErrorPassword2("");
 
-    const request = await fetch("http://localhost:5000/api/registration", {
+
+    const request = await fetch(`${API_BASE_URL}/registration`, {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, FIO }),
       method: "POST",

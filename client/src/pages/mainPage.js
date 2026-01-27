@@ -2,9 +2,8 @@ import YandexMap from "./../components/YandexMap";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ViewRoutePanel from "../components/ViewRoutePanel";
-
 import ImageCollection from "../components/ImageCollection";
-
+import { API_KEYS } from "../utils/consts";
 import "../styles/ViewLocationPanel.css";
 
 const MainPage = () => {
@@ -33,7 +32,9 @@ const MainPage = () => {
   const [comments, setComments] = useState([]); // Для хранения списка комментариев
   // В начале компонента MainPage, после других useState:
   const [locationPhotos, setLocationPhotos] = useState([]);
-  // В начало компонента MainPage, после других состояний
+  
+  // Получаем базовый URL из конфигурации
+  const API_BASE_URL = API_KEYS.API_URL;
 
   // Функция для открытия панели маршрута
   const handleRouteSelect = (routeId) => {
@@ -67,7 +68,7 @@ const MainPage = () => {
         return;
       }
 
-      const userRes = await fetch("http://localhost:5000/api/user/me", {
+      const userRes = await fetch(`${API_BASE_URL}/user/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -90,7 +91,7 @@ const MainPage = () => {
 
       // 3. Получаем текущую локацию (чтобы не затереть другие поля)
       const locRes = await fetch(
-        `http://localhost:5000/api/locations/${locationData.ID}`
+        `${API_BASE_URL}/locations/${locationData.ID}`
       );
       if (!locRes.ok) throw new Error("Не удалось загрузить локацию");
       const { location: currentLoc } = await locRes.json();
@@ -101,7 +102,7 @@ const MainPage = () => {
 
       // 5. Отправляем PATCH/PUT
       const updateRes = await fetch(
-        `http://localhost:5000/api/locations/${locationData.ID}`,
+        `${API_BASE_URL}/locations/${locationData.ID}`,
         {
           method: "PUT",
           headers: {
@@ -135,6 +136,7 @@ const MainPage = () => {
       alert(`Ошибка: ${err.message}`);
     }
   };
+  
   // Загрузка маршрутов при монтировании
   useEffect(() => {
     loadRoads();
@@ -163,7 +165,7 @@ const MainPage = () => {
   const handleLocationSelect = async (id) => {
     try {
       // 1. Получаем локацию
-      const response = await fetch(`http://localhost:5000/api/locations/${id}`);
+      const response = await fetch(`${API_BASE_URL}/locations/${id}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -192,7 +194,7 @@ const MainPage = () => {
 
       // 2. Загружаем фотографии
       const photosRes = await fetch(
-        `http://localhost:5000/api/photos/location/${id}`
+        `${API_BASE_URL}/photos/location/${id}`
       );
       const photosData = await photosRes.json();
 
@@ -217,6 +219,7 @@ const MainPage = () => {
       setError(err.message);
     }
   };
+  
   const handleUpload = () => {
     alert("Ошибка загрузки фотографий");
   };
@@ -224,7 +227,7 @@ const MainPage = () => {
   const loadRoads = async () => {
     try {
       console.log("Загрузка маршрутов...");
-      const response = await fetch("http://localhost:5000/api/roads");
+      const response = await fetch(`${API_BASE_URL}/roads`);
       if (response.ok) {
         const data = await response.json();
         console.log("Получены данные маршрутов:", data);
@@ -442,7 +445,7 @@ const MainPage = () => {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:5000/api/elevation?lat=${lat}&lng=${lng}`
+        `${API_BASE_URL}/elevation?lat=${lat}&lng=${lng}`
       );
 
       const data = await response.json();
@@ -471,7 +474,7 @@ const MainPage = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/locations" +
+        `${API_BASE_URL}/locations` +
           (tagString ? `?tags=${tagString}` : "")
       );
 
@@ -497,6 +500,7 @@ const MainPage = () => {
           onCoordinatesChange={handleCoordinatesChange}
           onElevationChange={handleCordElevationChange}
           onLocationSelect={handleLocationSelect}
+          apiKey={API_KEYS.YANDEX_MAPS}
         />
 
         {/* Панель поиска */}
@@ -592,8 +596,7 @@ const MainPage = () => {
               </button>
             </div>
 
-            {/* Фотографии */}
-            {/* Фотографии */}
+         
             <ImageCollection
               images={locationPhotos}
               uploadHandler={handleUpload}

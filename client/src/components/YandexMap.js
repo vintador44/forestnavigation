@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect}) => { // Изменили onElevationChange на onMapClick
+const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect}) => { 
   const mapRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const mapInstanceRef = useRef(null);
@@ -43,13 +43,12 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
 
             map.events.add("click", (e) => {
               const coords = e.get("coords");
-              console.log('Клик по карте YandexMap:', coords); // Добавляем логирование
-
+              console.log('Клик по карте YandexMap:', coords); 
               if (onCoordinatesChange) {
                 onCoordinatesChange(coords);
               }
 
-              // ВЫЗЫВАЕМ onMapClick вместо onElevationChange
+     
               if (onMapClick) {
                 onMapClick(coords);
               }
@@ -100,25 +99,24 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
     strokeColor: '#1e88e5',
     strokeWidth: 4,
     strokeOpacity: 0.7,
-    // Добавляем cursor для интерактивности
     cursor: 'pointer'
   });
 
-  // Добавляем обработчик клика на полилинию
+  
   routeLine.events.add('click', (e) => {
     console.log("Клик по маршруту:", name);
     if (onClick) {
       onClick();
     }
     
-    // Останавливаем всплытие события, чтобы не открывались другие балуны
+ 
     e.stopPropagation();
   });
 
-  // Добавляем tooltip при наведении
+
   routeLine.options.set('hintContent', `Маршрут: ${name}`);
   
-  // Меняем цвет при наведении для лучшей визуальной обратной связи
+  
   routeLine.events.add('mouseenter', () => {
     routeLine.options.set('strokeColor', '#1565c0');
     routeLine.options.set('strokeWidth', 5);
@@ -144,7 +142,7 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
     preset: 'islands#redCircleIcon'
   });
 
-  // Также добавляем обработчики клика на начальную и конечную метки
+
   startPlacemark.events.add('click', (e) => {
     console.log("Клик по начальной точке маршрута:", name);
     if (onClick) {
@@ -213,7 +211,7 @@ const YandexMap = ({onMapLoad, onCoordinatesChange, onMapClick, onLocationSelect
         script.parentNode.removeChild(script);
       }
     };
-  }, [onMapLoad, onCoordinatesChange, onMapClick]); // Добавляем зависимости
+  }, [onMapLoad, onCoordinatesChange, onMapClick]);
 
   return (
     <div

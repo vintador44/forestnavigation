@@ -12,7 +12,6 @@
   "dependencies": {
     "@testing-library/react": "^16.3.0",
     "axios": "^1.13.2",
-    "bcrypt": "^5.0.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
@@ -25,7 +24,7 @@
     "nodemailer": "^6.6.1",
     "pg": "^8.14.1",
     "sequelize": "^6.37.7",
-    "sequelize-cli": "^6.6.2",
+   
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^8.3.2",

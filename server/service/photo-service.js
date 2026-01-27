@@ -1,7 +1,7 @@
-// src/service/photo-service.js
+
 const db = require('../models');
 
-// 1️⃣ Функция загрузки фото — уже есть у вас
+
 const createPhotos = async (userId, locationId, photos) => {
   if (!Array.isArray(photos) || photos.length === 0) {
     return [];
@@ -13,7 +13,7 @@ const createPhotos = async (userId, locationId, photos) => {
         UserID: userId,
         LocationID: locationId,
         PhotoBYTEA: photo.buffer
-        // ⚠️ Важно: если хотите mimetype — добавьте колонку и сохраняйте его!
+     
       });
       return photoRecord;
     })
@@ -22,7 +22,7 @@ const createPhotos = async (userId, locationId, photos) => {
   return photoRecords;
 };
 
-// 2️⃣ НОВАЯ функция — ОБЪЯВИТЬ ДО module.exports!
+
 const getPhotosByLocation = async (locationId) => {
   return await db.Photo.findAll({
     where: { LocationID: locationId },
@@ -30,7 +30,7 @@ const getPhotosByLocation = async (locationId) => {
   });
 };
 
-// 3️⃣ Экспорт — только здесь ссылаемся на переменные
+
 module.exports = {
   createPhotos,
   getPhotosByLocation

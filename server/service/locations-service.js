@@ -1,5 +1,5 @@
 const { Location } = require("../models");
-//const { ApiError } = require("../exceptions/api-error");
+
 const { LocationsDto } = require("../dtos/location-dto");
 
 const { Op } = require("sequelize");
@@ -24,24 +24,24 @@ class LocationsService {
     return { locations: locations };
   }
   async createLocation(locationData) {
-     // или через app.get если предпочитаете
+   
 
     const newLocation = await Location.create(locationData);
     return newLocation;
   }
 
-  // ✅ LocationsService.js — правильная версия updateLocation
+
   async updateLocation(id, updateData) {
-    // Находим локацию
+
     const location = await Location.findByPk(id);
     if (!location) {
-      return null; // или throw new Error('Location not found');
+      return null; 
     }
 
-    // Обновляем поля
+
     await location.update(updateData);
 
-    // Преобразуем Coordinates для выхода (если нужно)
+
     if (location.Coordinates && location.Coordinates.coordinates) {
       location.Coordinates = location.Coordinates.coordinates;
     }

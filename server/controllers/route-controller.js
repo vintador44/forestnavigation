@@ -27,7 +27,7 @@ class RouteController {
     try {
       const { road, dots } = req.body;
 
-      // Валидация данных
+
       const validationError = this.validateRoadData(road, dots);
       if (validationError) {
         return res.status(400).json({
@@ -36,7 +36,7 @@ class RouteController {
         });
       }
 
-      // Проверяем существование пользователя
+
       const user = await User.findByPk(road.UserID);
       if (!user) {
         return res.status(404).json({
@@ -45,7 +45,7 @@ class RouteController {
         });
       }
 
-      // Создаем маршрут
+
       const newRoad = await Road.create({
         Description: road.Description,
         UserID: road.UserID,
@@ -60,7 +60,7 @@ class RouteController {
 
       console.log(`Создан маршрут ID: ${newRoad.ID}`);
 
-      // Создаем точки маршрута (только с существующими полями)
+
       const dotPromises = dots.map((dot, index) => {
         const isLastPoint = index === dots.length - 1;
 
@@ -78,7 +78,7 @@ class RouteController {
         `Создано ${createdDots.length} точек для маршрута ID: ${newRoad.ID}`
       );
 
-      // Получаем полные данные созданного маршрута с точками
+
       const roadWithDots = await Road.findByPk(newRoad.ID, {
         include: [
           {
@@ -113,7 +113,7 @@ class RouteController {
   }
 
   validateRoadData(road, dots) {
-    // Проверка основных полей маршрута
+
     if (!road || typeof road !== "object") {
       return "Неверный формат данных маршрута";
     }
@@ -130,12 +130,12 @@ class RouteController {
       }
     }
 
-    // Проверка UserID
+
     if (isNaN(road.UserID) || road.UserID <= 0) {
       return "Неверный идентификатор пользователя";
     }
 
-    // Проверка дат
+
     if (isNaN(new Date(road.StartDateTime).getTime())) {
       return "Неверный формат даты начала";
     }
@@ -144,12 +144,12 @@ class RouteController {
       return "Неверный формат даты окончания";
     }
 
-    // Проверка точек маршрута
+
     if (!dots || !Array.isArray(dots) || dots.length < 2) {
       return "Маршрут должен содержать минимум 2 точки";
     }
 
-    // Проверка каждой точки
+  
     for (let i = 0; i < dots.length; i++) {
       const dot = dots[i];
 
@@ -157,18 +157,18 @@ class RouteController {
         return `Точка ${i + 1}: отсутствуют координаты`;
       }
 
-      // Проверка формата координат
+      
       const coordsRegex = /^-?\d+\.?\d*,-?\d+\.?\d*$/;
       if (!coordsRegex.test(dot.ThisDotCoordinates)) {
         return `Точка ${i + 1}: неверный формат координат`;
       }
 
-      // Для всех точек кроме последней должна быть следующая точка
+
       if (i < dots.length - 1 && !dot.NextDotCoordinates) {
         return `Точка ${i + 1}: отсутствуют координаты следующей точки`;
       }
 
-      // Проверка следующей точки (если указана)
+
       if (dot.NextDotCoordinates && !coordsRegex.test(dot.NextDotCoordinates)) {
         return `Точка ${i + 1}: неверный формат координат следующей точки`;
       }
@@ -178,15 +178,15 @@ class RouteController {
   }
 
   formatCoordinates(coordsString) {
-    // Для типа geography(Point) в PostGIS нужно передавать в формате 'POINT(lng lat)'
+
     const [lat, lng] = coordsString
       .split(",")
       .map((coord) => parseFloat(coord).toFixed(6));
-    // Важно: порядок долгота (lng), затем широта (lat)
+
     return `POINT(${lng} ${lat})`;
   }
 
-  // Дополнительные методы для работы с маршрутами
+
 
   async getRoadsByUser(req, res) {
     try {
@@ -282,7 +282,7 @@ class RouteController {
         });
       }
 
-      // Проверяем права доступа (только создатель может удалить)
+   
       if (road.UserID !== parseInt(userId)) {
         return res.status(403).json({
           success: false,
@@ -290,10 +290,10 @@ class RouteController {
         });
       }
 
-      // Удаляем связанные точки
+
       await Dot.destroy({ where: { RoadID: id } });
 
-      // Удаляем маршрут
+
       await road.destroy();
 
       res.json({
@@ -320,7 +320,7 @@ class RouteController {
         durationHours = 3,
       } = req.query;
 
-      // Валидация координат
+
       if (!this.validateCoordinates(startLat, startLng, endLat, endLng)) {
         return res.status(400).json({
           success: false,
@@ -338,7 +338,7 @@ class RouteController {
         `Разбиваем маршрут на ${routePoints.length} точек за ${durationHours} часов`
       );
 
-      // Получаем все данные для маршрута с распределением по времени
+
       const routeData = await this.getRouteDataForPoints(
         routePoints,
         startDateTime,
@@ -389,7 +389,7 @@ class RouteController {
   const weatherTimeline = [];
   let totalDistance = 0, totalDifficulty = 0, totalClimb = 0, totalDescent = 0;
 
-  // 1. Запрос погоды на full interval
+
   const [middleLat, middleLng] = points[Math.floor(points.length / 2)];
   let weatherData = null;
   if (startDateTime) {
@@ -397,8 +397,8 @@ class RouteController {
     weatherData = await this.fetchWeatherForecast(middleLat, middleLng, startDateTime, durationHours);
   }
 
-  // 2. Накапливаем времена и статистику
-  const pointTimesSec = [0]; // время от старта до каждой точки (в секундах)
+
+  const pointTimesSec = [0]; 
   let cumulativeTimeSec = 0;
 
   // Первая точка
@@ -410,7 +410,7 @@ class RouteController {
     point_index: 0,
   });
 
-  // Пройти по сегментам
+
   for (let i = 1; i < points.length; i++) {
     const [lat, lng] = points[i];
     
@@ -425,12 +425,12 @@ class RouteController {
     };
     track.push(pointData);
 
-    // Считаем статистику сегмента
+
     const prevPoint = track[i - 1];
     const segmentStats = this.calculateSegmentStats(prevPoint, pointData);
 
-    // Время прохождения сегмента (средняя скорость — параметр)
-    const AVERAGE_SPEED_M_S = 5000 / 3600; // 5 км/ч → можно вынести в конфиг
+
+    const AVERAGE_SPEED_M_S = 5000 / 3600; 
     const segmentTimeSec = segmentStats.difficulty / AVERAGE_SPEED_M_S;
     cumulativeTimeSec += segmentTimeSec;
     pointTimesSec.push(cumulativeTimeSec);
@@ -442,14 +442,14 @@ class RouteController {
     totalDescent += segmentStats.descent;
   }
 
-  // 3. Масштабируем под желаемую длительность
+ 
   const actualDurationSec = pointTimesSec[pointTimesSec.length - 1] || 1;
   const targetDurationSec = durationHours * 3600;
   const timeScale = targetDurationSec / actualDurationSec;
 
   const scaledPointTimesHours = pointTimesSec.map(t => (t * timeScale) / 3600);
 
-  // 4. Распределяем погоду по точкам
+
   for (let i = 0; i < track.length; i++) {
     const pointTimeOffsetHours = scaledPointTimesHours[i];
     
@@ -466,7 +466,7 @@ class RouteController {
     }
   }
 
-  // 5. Статистика
+
   const statistics = {
     total_distance: Math.round(totalDistance),
     total_difficulty: Math.round(totalDifficulty),
@@ -485,7 +485,7 @@ class RouteController {
   const hourlyTimes = weatherData.hourly.time; 
   const targetTimeMs = new Date(hourlyTimes[0]).getTime() + timeOffsetHours * 3600 * 1000;
 
-  // Найти индекс ближайшего временного слота
+
   let bestIndex = 0;
   let minDiff = Infinity;
 
@@ -543,39 +543,39 @@ class RouteController {
         slopeAbs <= 10 ? 1.0 - 0.05 * slopeAbs : 0.5 + 0.03 * (slopeAbs - 10);
     }
 
-    // Учет погодных условий
+
     let weatherMultiplier = 1.0;
     
     if (weather) {
-      // Влияние температуры
+
       const temp = weather.temperature;
-      if (temp < -10) weatherMultiplier *= 1.4; // Сильный мороз
-      else if (temp < 0) weatherMultiplier *= 1.2; // Легкий мороз
-      else if (temp > 30) weatherMultiplier *= 1.3; // Сильная жара
-      else if (temp > 25) weatherMultiplier *= 1.1; // Жара
+      if (temp < -10) weatherMultiplier *= 1.4;
+      else if (temp < 0) weatherMultiplier *= 1.2;
+      else if (temp > 30) weatherMultiplier *= 1.3;
+      else if (temp > 25) weatherMultiplier *= 1.1; 
 
-      // Влияние ветра
+
       const wind = weather.windspeed;
-      if (wind > 15) weatherMultiplier *= 1.4; // Сильный ветер
-      else if (wind > 10) weatherMultiplier *= 1.2; // Умеренный ветер
-      else if (wind > 6) weatherMultiplier *= 1.1; // Легкий ветер
+      if (wind > 15) weatherMultiplier *= 1.4; 
+      else if (wind > 10) weatherMultiplier *= 1.2; 
+      else if (wind > 6) weatherMultiplier *= 1.1; 
 
-      // Влияние осадков
+    
       const precipitation = weather.precipitation;
-      if (precipitation > 5) weatherMultiplier *= 1.5; // Сильный дождь/снег
-      else if (precipitation > 2) weatherMultiplier *= 1.3; // Умеренные осадки
-      else if (precipitation > 0.5) weatherMultiplier *= 1.1; // Легкие осадки
+      if (precipitation > 5) weatherMultiplier *= 1.5; 
+      else if (precipitation > 2) weatherMultiplier *= 1.3; 
+      else if (precipitation > 0.5) weatherMultiplier *= 1.1; 
 
-      // Влияние типа погоды (weathercode)
+
       const weatherCode = weather.weathercode;
-      // Коды неблагоприятной погоды: дождь, снег, гроза, туман
+
       const adverseWeatherCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99, 45, 48];
       if (adverseWeatherCodes.includes(weatherCode)) {
         weatherMultiplier *= 1.3;
       }
     }
 
-    // Общий множитель сложности
+
     const totalMultiplier = difficultyMultiplier * weatherMultiplier;
     const difficulty = distance * totalMultiplier;
 
@@ -603,7 +603,7 @@ class RouteController {
   }
 
   async fetchWeatherForecast(lat, lng, startDateTime, durationHours) {
-    // Вычисляем конечную дату на основе длительности
+
     const startDate = new Date(startDateTime);
     const endDate = new Date(
       startDate.getTime() + durationHours * 60 * 60 * 1000
@@ -652,7 +652,7 @@ class RouteController {
 
     return true;
   }
-  // В route-controller.js добавить метод:
+
 
 async getAllRoads(req, res) {
   try {

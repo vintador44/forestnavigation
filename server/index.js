@@ -6,8 +6,8 @@ const postgres = require('./config-db/pg-db-pool');
 const router = require('./router/index');
 const expressWS = require('express-ws');
 
-// Импортируем модели
-const db = require('./models'); // путь к вашему models/index.js
+
+const db = require('./models'); 
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -21,18 +21,15 @@ app.use(cors({
     origin: process.env.CLIENT_URL
 }));
 
-// Регистрируем модели в приложении
+
 app.set('models', db);
 
-// Проверяем подключение к БД и синхронизируем модели
+
 db.sequelize.authenticate()
   .then(() => {
     console.log('Database connection established successfully.');
-    // Синхронизация моделей (опционально)
-    return db.sequelize.sync(); // { force: false } - не перезаписывает таблицы
-  })
-  .then(() => {
-    console.log('Models synchronized successfully.');
+ 
+    console.log('Database is ready (tables created via init.sql)');
   })
   .catch(err => {
     console.error('Unable to connect to the database:', err);

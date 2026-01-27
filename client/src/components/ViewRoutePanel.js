@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_KEYS } from "../utils/consts";
 import "./../styles/ViewRoutePanel.css";
 
 const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
@@ -9,6 +10,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+  const BASE_API = API_KEYS.API_URL
 
   useEffect(() => {
     if (isOpen && routeId) {
@@ -27,8 +29,8 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
     setError(null);
     
     try {
-      // 1. Загружаем данные маршрута
-      const routeResponse = await fetch(`http://localhost:5000/api/roads/${routeId}`);
+  
+      const routeResponse = await fetch(`${BASE_API}/roads/${routeId}`);
       
       if (!routeResponse.ok) {
         throw new Error(`HTTP error: ${routeResponse.status}`);
@@ -41,15 +43,14 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
         const route = routeDataJson.data.road;
         setRouteData(route);
         
-        // 2. Рассчитываем время прибытия в каждую точку
+
         const times = calculateArrivalTimes(route);
         setArrivalTimes(times);
         
-        // 3. Рассчитываем полную статистику маршрута через API
+ 
         if (route.dots && route.dots.length >= 2) {
           await calculateRouteStatsWithAPI(route);
           
-          // 4. Загружаем прогноз погоды для каждой точки
           await loadWeatherForPoints(route, times);
         }
       } else {
@@ -73,7 +74,6 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
         total_descent: 0
       };
       
-      // Проходим по всем сегментам маршрута (между точками)
       for (let i = 0; i < dots.length - 1; i++) {
         const currentDot = dots[i];
         const nextDot = dots[i + 1];
@@ -83,7 +83,6 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
         
         if (!startCoords || !endCoords) continue;
         
-        // Используем тот же API, что и при создании маршрута
         const segmentStats = await getSegmentStatsFromAPI(
           startCoords.lat,
           startCoords.lng,
@@ -101,34 +100,28 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
           totalStats.total_descent += segmentStats.total_descent || 0;
         }
         
-        // Задержка между запросами
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       console.log("Итоговая статистика:", totalStats);
-      
       setRouteStats(totalStats);
       
     } catch (error) {
       console.error("Ошибка расчета статистики через API:", error);
-      // Если API не работает, используем упрощенный расчет
       calculateSimplifiedStats(route);
     }
   };
 
   const getSegmentStatsFromAPI = async (startLat, startLng, endLat, endLng, startDateTime, segmentIndex, totalSegments) => {
     try {
-      // Расчет длительности сегмента на основе общего времени маршрута
-      // Для простоты делим общее время на количество сегментов
-      // В реальности нужно учитывать длину каждого сегмента
-      const segmentDurationHours = 3; // По умолчанию 3 часа, как в CreateRoadPage
+      const segmentDurationHours = 3;
       
       console.log(`Запрос статистики для сегмента ${segmentIndex + 1}:`, {
         startLat, startLng, endLat, endLng, startDateTime, segmentDurationHours
       });
       
       const response = await fetch(
-        `http://localhost:5000/api/route/elevations?` +
+        `${BASE_API}/route/elevations?` +
         `startLat=${startLat}&startLng=${startLng}&` +
         `endLat=${endLat}&endLng=${endLng}&` +
         `startDateTime=${startDateTime}&durationHours=${segmentDurationHours}`
@@ -136,7 +129,6 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`Данные сегмента ${segmentIndex + 1}:`, data);
         if (data.success) {
           return data.statistics;
         }
@@ -175,7 +167,6 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
         
         totalDistance += segmentDistance;
         
-        // Получаем высоты для расчета подъемов/спусков
         const startElevation = await getElevation(startCoords.lat, startCoords.lng);
         const endElevation = await getElevation(endCoords.lat, endCoords.lng);
         
@@ -191,9 +182,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      // Упрощенный расчет сложности (как в CreateRoadPage API)
-      // Формула: distance * multiplier (учитывает уклон, погоду и т.д.)
-      const simplifiedDifficulty = Math.round(totalDistance * 1.5); // Примерный множитель
+      const simplifiedDifficulty = Math.round(totalDistance * 1.5);
       
       setRouteStats({
         total_distance: totalDistance,
@@ -213,11 +202,9 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
     const startTime = new Date(route.StartDateTime);
     const endTime = new Date(route.EndDateTime);
     const totalDurationMs = endTime - startTime;
-    
     const pointsCount = route.dots.length;
     const arrivalTimes = [];
     
-    // Равномерно распределяем время между точками
     for (let i = 0; i < pointsCount; i++) {
       const fraction = i / (pointsCount - 1);
       const pointTime = new Date(startTime.getTime() + fraction * totalDurationMs);
@@ -266,7 +253,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
       const dateTimeStr = time.toISOString().replace('T', ' ').substring(0, 19);
       
       const response = await fetch(
-        `http://localhost:5000/api/weather/forecast/range?` +
+        `${BASE_API}/weather/forecast/range?` +
         `lat=${lat}&lng=${lng}&` +
         `fromDateTime=${dateTimeStr}&` +
         `toDateTime=${dateTimeStr}`
@@ -289,9 +276,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
 
   const getCurrentWeather = async (lat, lng) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/weather?lat=${lat}&lng=${lng}`
-      );
+      const response = await fetch(`${BASE_API}/weather?lat=${lat}&lng=${lng}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -348,9 +333,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
 
   const getElevation = async (lat, lng) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/elevation?lat=${lat}&lng=${lng}`
-      );
+      const response = await fetch(`${BASE_API}/elevation?lat=${lat}&lng=${lng}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -433,14 +416,14 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
         <div id="view-route-content">
           {isLoading && (
             <div className="loading-message">
-              <p>⏳ Загрузка данных маршрута...</p>
+              <p> Загрузка данных маршрута...</p>
               <p><small>Расчет статистики может занять время</small></p>
             </div>
           )}
 
           {error && (
             <div className="error-message">
-              <p>❌ Ошибка: {error}</p>
+              <p> Ошибка: {error}</p>
               <button 
                 onClick={loadRouteData}
                 className="retry-button"
@@ -537,7 +520,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
                   </div>
                 ) : (
                   <div className="calculating-stats">
-                    <p>⏳ Расчет статистики маршрута...</p>
+                    <p> Расчет статистики маршрута...</p>
                     <small>Используется тот же алгоритм, что и при создании маршрута</small>
                     <div className="progress-bar">
                       <div className="progress"></div>
@@ -550,7 +533,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
                 <div className="section-header">
                   <h3>Точки маршрута ({routeData.dots?.length || 0})</h3>
                   {isWeatherLoading && (
-                    <span className="weather-loading">⏳ Загрузка погоды...</span>
+                    <span className="weather-loading"> Загрузка погоды...</span>
                   )}
                 </div>
                 {routeData.dots && routeData.dots.length > 0 ? (
@@ -609,7 +592,7 @@ const ViewRoutePanel = ({ routeId, onClose, isOpen }) => {
                           
                           {index < routeData.dots.length - 1 && (
                             <div className="point-next">
-                              <small>→ Следующая точка</small>
+                              <small>Следующая точка</small>
                             </div>
                           )}
                         </div>

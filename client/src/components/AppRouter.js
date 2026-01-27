@@ -9,7 +9,7 @@ import CreateRoadPage from "../pages/createRoadPage";
 const AppRouter = () => {
   return (
     <Routes>
-      {/* Сюда прописываете маршрутизацию */}
+      
       <Route path="/" element={<Login />} />
       <Route path="/MainPage" element={<MainPage />} />
       <Route path="/registration" element={<Registration />} />

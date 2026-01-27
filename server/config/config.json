@@ -3,21 +3,22 @@
     "username": "postgres",
     "password": "Kiillofs2",
     "database": "forestnavigation_database",
-    "host": "localhost",
-    "dialect": "postgres"
+    "host": "database",          
+    "dialect": "postgres",
+    "port": 5432
   },
   "test": {
     "username": "postgres",
     "password": "Kiillofs2",
     "database": "forestnavigation_database",
-    "host": "localhost",
+    "host": "database",           
     "dialect": "postgres"
   },
   "production": {
     "username": "postgres",
     "password": "Kiillofs2",
     "database": "forestnavigation_database",
-    "host": "localhost",
+    "host": "database",          
     "dialect": "postgres"
   }
 }
